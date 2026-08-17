@@ -1222,7 +1222,7 @@ function renderTreeNode(node, depth) {
     } else {
       progText = `超${catCredit - node.max}`; progCls = "tree-progress warn";
     }
-    const statsText = currentSemester === "all" ? `${total}门` : `可选${avail}/${total}`;
+    const statsText = currentSemester === "all" ? `${total}门` : `${avail}`;
     const detailBtn = node.desc ? `<span class="tree-cat-detail" onclick="event.stopPropagation();showCatDetail('${node.id}')" title="查看分类介绍">详情</span>` : "";
     right = `<span class="tree-stats">${statsText}</span><span class="${progCls}">${progText}</span>${detailBtn}<span class="tree-enter">进入 →</span>`;
   } else {
@@ -1352,7 +1352,7 @@ function renderCategoryPage(id) {
         <div class="group-header" onclick="toggleGroup('${g}-${idx}')">
           <span class="group-arrow" id="arrow-${g}-${idx}">▶</span>
           <span class="group-name">(${idx + 1}) ${g}</span>
-          <span class="group-meta">${minLabel} · 已选 ${selCount} · 可选 ${availCount}/${courses.length} 门</span>
+          <span class="group-meta">${minLabel} · 已选 ${selCount} · 可选 ${availCount}</span>
           <span class="group-status">${statusHtml}</span>
           <span class="group-detail-btn" onclick="event.stopPropagation();showGroupDetail('${id}','${g}')">详情</span>
         </div>
@@ -1546,7 +1546,7 @@ function updateGroupHeaders() {
     }
     if (metaEl) {
       const minLabel = min != null ? ` · 至少 ${min} 学分` : "";
-      metaEl.textContent = `${minLabel} · 已选 ${selCount} · 可选 ${availCount}/${courses.length} 门`.trim();
+      metaEl.textContent = `${minLabel} · 已选 ${selCount} · 可选 ${availCount}`.trim();
     }
   });
 }
