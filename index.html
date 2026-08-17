@@ -97,14 +97,22 @@
     font-weight: 500;
   }
   .course-info { flex: 1; min-width: 0; }
+  .course-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+  .course-credit { margin: 0; padding: 2px 8px; }
   .course-name {
     font-weight: 500;
     color: #2c3e50;
-    word-break: break-all;
-    overflow-wrap: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
     white-space: normal;
-    line-height: 1.4;
-    max-height: 2.8em;
+    line-height: 1.45;
+    max-height: 2.9em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -173,8 +181,6 @@
     color: #fff;
   }
   .course-credit {
-    margin: 0 14px;
-    padding: 2px 8px;
     background: #fff3cd;
     color: #856404;
     border-radius: 10px;
@@ -528,11 +534,82 @@
   @media (max-width: 900px) {
     .container { grid-template-columns: 1fr; }
     .sidebar { position: static; max-height: none; }
-    .course { padding: 10px 12px; }
-    .course-name { font-size: 14px; }
+    .course {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .course-info { min-width: 0; flex: 1; }
+    .course-name {
+      font-size: 14px;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      line-height: 1.45;
+      hyphens: auto;
+      text-wrap: pretty;
+    }
     .course-meta { font-size: 11px; }
+    /* 学分徽章:简化为只显示数字 */
+    .course-credit {
+      font-size: 11px;
+      padding: 2px 5px;
+      white-space: nowrap;
+    }
+    /* 按钮区整体瘦身,不再把文字撑宽 */
+    .course-actions {
+      gap: 4px;
+      margin-left: 4px;
+    }
+    .course .btn {
+      padding: 5px 8px;
+      font-size: 12px;
+      min-width: 0;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
     .category-body { padding: 8px 14px 12px; }
     .group-header { padding: 8px 12px; }
+  }
+  /* 极窄屏(≤420px,手机竖屏) — 按钮改单字,最大化课程名宽度 */
+  @media (max-width: 420px) {
+    .course { padding: 8px 10px; gap: 6px; }
+    .course-name {
+      font-size: 13px;
+      line-height: 1.4;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      max-height: 2.8em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .course-meta { font-size: 10px; line-height: 1.3; }
+    /* 学分徽章:隐藏"学分"二字,只显示数字 */
+    .course-credit {
+      font-size: 11px;
+      padding: 2px 4px;
+      min-width: 0;
+    }
+    .course-actions { gap: 3px; margin-left: 2px; flex-shrink: 0; }
+    /* 按钮瘦身:选修→选,退选→退,已修→已,已修✓→✓,详情→📋 */
+    .course .btn {
+      padding: 4px 5px;
+      font-size: 11px;
+      border-radius: 4px;
+      min-width: 0;
+    }
+    .course .btn-select { font-size: 0; padding: 4px 7px; }
+    .course .btn-select::after { content: "选"; font-size: 11px; }
+    .course .btn-drop { font-size: 0; padding: 4px 7px; }
+    .course .btn-drop::after { content: "退"; font-size: 11px; }
+    .course .btn-done:not(.active) { font-size: 0; padding: 4px 7px; }
+    .course .btn-done:not(.active)::after { content: "已"; font-size: 11px; }
+    .course .btn-done.active { font-size: 0; padding: 4px 6px; }
+    .course .btn-done.active::after { content: "✓"; font-size: 11px; }
+    .course .btn-detail { font-size: 0; padding: 4px 5px; }
+    .course .btn-detail::after { content: "📋"; font-size: 11px; }
   }
 </style>
 </head>
@@ -1230,14 +1307,16 @@ function renderCourseCard(c) {
         <div class="course-meta">${c.meta}</div>
         ${altMeta}
       </div>
-      ${creditBadge}
-      ${c.desc ? `<button class="btn btn-detail" onclick="showDetail('${c.id}')">详情</button>` : ''}
-      <button class="btn btn-done${isCompleted ? ' active' : ''}" onclick="toggleCompleted('${c.id}')" title="标记为已修/未修">
-        ${isCompleted ? '已修✓' : '已修'}
-      </button>
-      <button class="btn ${isSelected ? 'btn-drop' : 'btn-select'}" onclick="toggleCourse('${c.id}')"${btnDisabled}>
-        ${isSelected ? '退选' : '选修'}
-      </button>
+      <div class="course-actions">
+        ${creditBadge}
+        ${c.desc ? `<button class="btn btn-detail" onclick="showDetail('${c.id}')" data-label="详情">详情</button>` : ''}
+        <button class="btn btn-done${isCompleted ? ' active' : ''}" onclick="toggleCompleted('${c.id}')" title="标记为已修/未修" data-label-done="已修" data-label-active="已修✓">
+          ${isCompleted ? '已修✓' : '已修'}
+        </button>
+        <button class="btn ${isSelected ? 'btn-drop' : 'btn-select'}" onclick="toggleCourse('${c.id}')"${btnDisabled} data-label-select="选修" data-label-drop="退选">
+          ${isSelected ? '退选' : '选修'}
+        </button>
+      </div>
     </div>
   `;
 }
