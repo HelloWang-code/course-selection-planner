@@ -422,6 +422,10 @@
     color: #2c3e50;
     flex: 1;
     min-width: 0;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    line-height: 1.4;
   }
   .tree-node-row.is-leaf .tree-name { font-weight: 500; }
   .tree-node-row.is-leaf:hover .tree-name { color: #4a90e2; }
@@ -610,6 +614,32 @@
     .course .btn-done.active::after { content: "✓"; font-size: 11px; }
     .course .btn-detail { font-size: 0; padding: 4px 5px; }
     .course .btn-detail::after { content: "📋"; font-size: 11px; }
+
+    /* 目录树(根目录/次级目录)移动端优化 */
+    .home-grid { padding: 8px 12px 14px; }
+    .tree-node-row { padding: 8px 6px; gap: 4px; }
+    .tree-name {
+      font-size: 13px;
+      line-height: 1.35;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+    .tree-req {
+      font-size: 10px;
+      padding: 1px 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tree-stats { font-size: 10px; flex-shrink: 0; }
+    .tree-progress { font-size: 10px; margin-left: 4px; flex-shrink: 0; }
+    .tree-enter {
+      font-size: 10px;
+      padding: 1px 6px;
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+    .tree-children { margin-left: 14px; padding-left: 4px; }
   }
 </style>
 </head>
