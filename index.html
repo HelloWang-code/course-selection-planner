@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选课系统</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: #fff;
+    padding: 20px 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  header h1 { font-size: 24px; margin-bottom: 6px; }
+  header p { opacity: 0.9; font-size: 14px; }
+
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    max-width: 1280px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  .main { min-width: 0; }
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+
+  .category {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .category-header {
+    padding: 14px 20px;
+    background: #f5f7fa;
+    border-left: 4px solid #4a90e2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .category-header h2 { font-size: 17px; color: #2c3e50; }
+  .category-header .req {
+    font-size: 13px;
+    color: #7f8c8d;
+    background: #e8ecef;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .category-body { padding: 10px 20px 16px; }
+
+  .course {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid #e8ecef;
+    border-radius: 6px;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .course:hover { border-color: #4a90e2; background: #fafcff; }
+  .course.selected { background: #e8f5e9; border-color: #66bb6a; }
+  .course.completed { background: #eef2f7; border-color: #7f8c8d; border-style: dashed; }
+  .course.completed.selected { background: #e8f5e9; border-color: #66bb6a; border-style: solid; }
+  .course.completed .course-name { color: #7f8c8d; }
+  .course.completed .course-name::after {
+    content: "已修";
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: #7f8c8d;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .course-info { flex: 1; min-width: 0; }
+  .course-name { font-weight: 500; color: #2c3e50; }
+  .course-meta { font-size: 12px; color: #95a5a6; margin-top: 2px; }
+  .course-group {
+    margin-top: 18px;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .course-group:first-child { margin-top: 8px; }
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #f4f8fb, #eef2f7);
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #e0e6ed;
+    transition: background 0.15s;
+  }
+  .group-header:hover { background: #e8eef5; }
+  .group-arrow {
+    color: #5a6c7d;
+    font-size: 12px;
+    width: 14px;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .group-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 15px;
+  }
+  .group-meta {
+    color: #7f8c8d;
+    font-size: 12px;
+  }
+  .group-status {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .group-body {
+    padding: 8px 12px 12px;
+    background: #fbfcfd;
+  }
+  .group-detail-btn {
+    margin-left: 10px;
+    padding: 2px 10px;
+    font-size: 12px;
+    color: #8e44ad;
+    border: 1px solid #d2b4de;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .group-detail-btn:hover {
+    background: #8e44ad;
+    color: #fff;
+  }
+  .course-credit {
+    margin: 0 14px;
+    padding: 2px 8px;
+    background: #fff3cd;
+    color: #856404;
+    border-radius: 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .btn {
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .btn-select { background: #4a90e2; color: #fff; }
+  .btn-select:hover { background: #357abd; }
+  .btn-drop { background: #e74c3c; color: #fff; }
+  .btn-drop:hover { background: #c0392b; }
+  .btn-done { background: #fff; color: #7f8c8d; border: 1px solid #bdc3c7; margin-right: 6px; }
+  .btn-done:hover { background: #ecf0f1; }
+  .btn-done.active { background: #34495e; color: #fff; border-color: #34495e; }
+  .btn-done.active:hover { background: #2c3e50; }
+  .btn-detail { background: #95a5a6; color: #fff; margin-right: 6px; }
+  .btn-reset {
+    width: 100%; padding: 8px 12px;
+    background: #fff; color: #e74c3c; border: 1px solid #e74c3c;
+    border-radius: 6px; cursor: pointer; font-size: 13px;
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { background: #e74c3c; color: #fff; }
+  .btn-detail:hover { background: #7f8c8d; }
+
+  .modal-mask {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none; justify-content: center; align-items: center;
+    z-index: 1000;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 8px; padding: 24px 28px;
+    max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .modal h3 { color: #2c3e50; margin-bottom: 8px; font-size: 18px; }
+  .modal .modal-meta { font-size: 13px; color: #95a5a6; margin-bottom: 14px; }
+  .modal .modal-desc { color: #444; font-size: 14px; line-height: 1.8; }
+  .modal-desc p { margin: 8px 0; }
+  .modal-desc h1, .modal-desc h2, .modal-desc h3, .modal-desc h4, .modal-desc h5, .modal-desc h6 {
+    margin: 14px 0 8px; color: #2c3e50; font-weight: 600; line-height: 1.4;
+  }
+  .modal-desc h1 { font-size: 18px; }
+  .modal-desc h2 { font-size: 17px; }
+  .modal-desc h3 { font-size: 16px; }
+  .modal-desc h4, .modal-desc h5, .modal-desc h6 { font-size: 15px; }
+  .modal-desc ul, .modal-desc ol { margin: 8px 0; padding-left: 24px; }
+  .modal-desc li { margin: 4px 0; }
+  .modal-desc hr { border: 0; border-top: 1px dashed #e0e6ed; margin: 12px 0; }
+  .modal-desc strong { color: #2c3e50; font-weight: 600; }
+  .modal-desc code {
+    background: #f4f6f8; padding: 1px 5px; border-radius: 3px;
+    font-family: Consolas, Monaco, monospace; font-size: 13px; color: #c0392b;
+  }
+  .md-table-wrap { overflow-x: auto; margin: 10px 0; }
+  .md-table {
+    border-collapse: collapse; width: 100%; font-size: 13px;
+    background: #fff; border: 1px solid #e0e6ed; border-radius: 4px; overflow: hidden;
+  }
+  .md-table th, .md-table td {
+    border: 1px solid #e0e6ed; padding: 6px 10px; text-align: left; vertical-align: top;
+  }
+  .md-table th {
+    background: #f4f8fb; color: #2c3e50; font-weight: 600; white-space: nowrap;
+  }
+  .md-table tbody tr:nth-child(even) { background: #fafbfc; }
+  .md-table tbody tr:hover { background: #f0f7ff; }
+  .modal-images { margin-top: 16px; border-top: 1px dashed #ecf0f1; padding-top: 12px; }
+  .modal-images .img-title { font-size: 13px; color: #7f8c8d; margin-bottom: 8px; }
+  .modal-images img {
+    width: 100%; border: 1px solid #ecf0f1; border-radius: 4px;
+    margin-bottom: 10px; display: block;
+  }
+  .modal-close {
+    position: absolute; top: 12px; right: 16px;
+    border: none; background: none; font-size: 22px; color: #95a5a6;
+    cursor: pointer; line-height: 1;
+  }
+  .modal-close:hover { color: #333; }
+
+  .stat-box { margin-bottom: 16px; }
+  .stat-total {
+    font-size: 28px;
+    font-weight: bold;
+    color: #4a90e2;
+    margin: 4px 0;
+  }
+  .stat-label { color: #7f8c8d; font-size: 13px; }
+
+  .progress-bar {
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #66bb6a, #4caf50);
+    transition: width 0.3s;
+  }
+
+  .selected-list { list-style: none; }
+  .selected-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ecf0f1;
+    font-size: 13px;
+  }
+  .selected-list li:last-child { border-bottom: none; }
+  .selected-list .empty { color: #bdc3c7; text-align: center; padding: 20px 0; }
+
+  .req-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #ecf0f1;
+  }
+  .req-item .ok { color: #27ae60; }
+  .req-item .warn { color: #e67e22; }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(44, 62, 80, 0.95);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  .semester-bar {
+    background: #fff;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e8ecef;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    max-width: 1280px;
+    margin: 0 auto;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .semester-bar .label {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-right: 4px;
+  }
+  .semester-btn {
+    border: 1px solid #d5dbdb;
+    background: #fff;
+    color: #34495e;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .semester-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+  .semester-btn.active {
+    background: #4a90e2;
+    color: #fff;
+    border-color: #4a90e2;
+  }
+  .course-semester {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: #eaf4fe;
+    color: #357abd;
+    margin-left: 8px;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .empty-hint {
+    padding: 30px 20px;
+    text-align: center;
+    color: #bdc3c7;
+    font-size: 13px;
+    background: #fff;
+    border-radius: 8px;
+  }
+
+  .home-grid {
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 20px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .tree-node { user-select: none; }
+  .tree-node-row {
+    display: flex;
+    align-items: center;
+    padding: 9px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 6px;
+  }
+  .tree-node-row:hover { background: #f5f7fa; }
+  .tree-arrow {
+    width: 16px; height: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #95a5a6;
+    font-size: 12px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .tree-arrow.leaf { color: transparent; }
+  .tree-arrow.expanded { transform: rotate(90deg); }
+  .tree-icon {
+    font-size: 15px;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+  .tree-name {
+    font-size: 14px;
+    color: #2c3e50;
+    flex: 1;
+    min-width: 0;
+  }
+  .tree-node-row.is-leaf .tree-name { font-weight: 500; }
+  .tree-node-row.is-leaf:hover .tree-name { color: #4a90e2; }
+  .tree-req {
+    font-size: 12px;
+    color: #7f8c8d;
+    background: #e8ecef;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .tree-stats {
+    font-size: 11px;
+    color: #95a5a6;
+    white-space: nowrap;
+  }
+  .tree-progress {
+    font-size: 11px;
+    white-space: nowrap;
+    margin-left: 6px;
+  }
+  .tree-progress.ok { color: #27ae60; }
+  .tree-progress.warn { color: #e67e22; }
+  .tree-children {
+    margin-left: 22px;
+    border-left: 1px dashed #d5dbdb;
+    padding-left: 4px;
+    display: none;
+  }
+  .tree-children.show { display: block; }
+  .tree-enter {
+    font-size: 12px;
+    color: #4a90e2;
+    padding: 2px 8px;
+    border: 1px solid #4a90e2;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-left: 6px;
+  }
+  .tree-node-row.is-leaf:hover .tree-enter { background: #4a90e2; color: #fff; }
+  .tree-cat-detail {
+    font-size: 12px;
+    color: #9b59b6;
+    padding: 2px 8px;
+    border: 1px solid #9b59b6;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-left: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tree-cat-detail:hover { background: #9b59b6; color: #fff; }
+
+  .sub-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .btn-back {
+    border: none;
+    background: linear-gradient(135deg, #ff6b35, #e74c3c);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.45), 0 0 0 3px rgba(231, 76, 60, 0.12);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    animation: btn-back-pulse 2s ease-in-out infinite;
+  }
+  .btn-back:hover {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 6px 18px rgba(231, 76, 60, 0.6), 0 0 0 4px rgba(231, 76, 60, 0.2);
+    transform: translateY(-2px) scale(1.03);
+  }
+  .btn-back:active { transform: translateY(0) scale(1); }
+  .btn-back .arrow {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .btn-back:hover .arrow { transform: translateX(-4px); }
+  @keyframes btn-back-pulse {
+    0%, 100% { box-shadow: 0 4px 12px rgba(231, 76, 60, 0.45), 0 0 0 3px rgba(231, 76, 60, 0.12); }
+    50% { box-shadow: 0 4px 16px rgba(231, 76, 60, 0.55), 0 0 0 7px rgba(231, 76, 60, 0.08); }
+  }
+  .sub-header h2 { font-size: 19px; color: #2c3e50; }
+  .sub-header .sub-req {
+    font-size: 13px; color: #7f8c8d;
+    background: #e8ecef; padding: 3px 10px; border-radius: 12px;
+  }
+
+  .course.disabled { opacity: 0.55; background: #fafafa; }
+  .btn-select:disabled,
+  .btn-drop:disabled {
+    background: #bdc3c7 !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .course.disabled:hover { border-color: #e8ecef; background: #fafafa; }
+
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+    .sidebar { position: static; max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>选课系统</h1>
+  <p>根据培养方案完成选课,请确保满足各类学分要求</p>
+</header>
+
+<div class="semester-bar" id="semesterBar"></div>
+
+<div class="container">
+  <div class="main">
+    <div id="homeView">
+      <div class="home-grid" id="treeContainer"></div>
+    </div>
+    <div id="subView" style="display:none;">
+      <div class="sub-header" id="subHeader"></div>
+      <div id="courseContainer"></div>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="stat-box">
+      <div class="stat-label">已选总学分</div>
+      <div class="stat-total" id="totalCredit">0</div>
+      <div class="progress-bar"><div class="progress-fill" id="totalProgress" style="width:0%"></div></div>
+      <div style="font-size:12px;color:#95a5a6;margin-top:4px;">建议总学分:127~141</div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-label" style="margin-bottom:6px;">分类完成情况</div>
+      <div id="reqList"></div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-label" style="margin-bottom:8px;">已选课程 <span id="selectedCount" style="color:#4a90e2;font-weight:400;">0 门 · 0 学分</span></div>
+      <ul class="selected-list" id="selectedList">
+        <li class="empty">暂未选课</li>
+      </ul>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-label" style="margin-bottom:8px;">已修课程 <span id="completedCount" style="color:#7f8c8d;font-weight:400;">0 门</span></div>
+      <ul class="selected-list" id="completedList">
+        <li class="empty">暂无已修标记</li>
+      </ul>
+    </div>
+
+    <div class="stat-box">
+      <button class="btn-reset" onclick="resetAll()">清空全部选课</button>
+      <button class="btn-reset" style="margin-top:6px;color:#7f8c8d;border-color:#bdc3c7;" onclick="resetCompleted()">清空已修标记</button>
+      <div style="font-size:11px;color:#95a5a6;margin-top:6px;line-height:1.5;">已选课、已修、学期、目录展开状态会自动保存到浏览器,刷新后保留。</div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-mask" id="modalMask" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeDetail()">×</button>
+    <h3 id="modalTitle"></h3>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-desc" id="modalDesc"></div>
+    <div class="modal-images" id="modalImages"></div>
+  </div>
+</div>
+
+<script>
+// 多层树形数据结构:root → 大类 → 子分类(叶子,带 courses)→ 课程
+// 叶子节点为可进入子页的分类,非叶子节点仅作分组
+const tree = [
+  {
+    id: "public_basic",
+    name: "公共与基础课程",
+    children: [
+      {
+        id: "sx_required",
+        name: "思想政治 · 必修",
+        require: "16 学分",
+        min: 16, max: 16,
+        desc: "【修读要求】\n思想政治理论课为全校公共必修课程,共 19 学分,包括习近平新时代中国特色社会主义思想概论、思想道德与法治、中国近现代史纲要、马克思主义基本原理、毛泽东思想和中国特色社会主义理论体系概论、形势与政策 6 门理论课程和思想政治实践 1 门实践课程。\n\n【课程设置】\n1. 习近平新时代中国特色社会主义思想概论 3 学分,3 学时/周,要求在大一任一学期选修。\n2. 思想道德与法治 3 学分,3 学时/周,要求在大一任一学期选修。\n3. 中国近现代史纲要 3 学分,3 学时/周,要求在大一任一学期选修。\n4. 马克思主义基本原理 3 学分,3 学时/周,要求在大二任一学期选修。\n5. 毛泽东思想和中国特色社会主义理论体系概论 3 学分,3 学时/周,要求在大二任一学期选修。\n6. 形势与政策 2 学分,要求在大一秋季学期选课,课程从大一秋季学期开始至大三春季学期结束,持续 6 个学期,请勿重复选课。其中,大一秋季学期为班级教学,包含 1 学分 16 学时的教学内容,大一至大三的 6 个学期内学生需根据助教的通知选修 4 次讲座。在课程学期期间,请学生们与助教保持联系。\n7. 思想政治实践 2 学分,分为上、下两门课程(各 1 学分),要求学生在入学后两年半内选修并完成。思想政治实践(上)秋季学期开课,包含\"爱乐传习\"和\"志愿服务\"两个模块,学生可任选其一。思想政治实践(下)春季学期开课,包括\"社会实践\"模块。\n\n【学业评价方式】\n1. 思想政治理论课的考试考核与成绩评定按照《北京大学本科生学籍管理办法》和《北京大学本科考试工作与学习纪律管理规定》的有关规定执行。\n2. 请严格按照选课时间选课。因病假、事假、外出实习等原因不能参加期末考试,必须按照《北京大学本科生学籍管理办法》规定的程序办理请假缓考手续。被批准缓考的学生应当重新选课并参加相应课程的期末考试。\n3. 习近平新时代中国特色社会主义思想概论、思想道德与法治、中国近现代史纲要、马克思主义基本原理、毛泽东思想和中国特色社会主义理论体系概论等五门课程的成绩由\"平时成绩(考勤与课堂参与)+期中作业成绩+期末考试成绩\"构成。\n4. 形势与政策持续 3 年、6 个学期,在教师、助教的指导下学习并及时提交作业,该课程由\"考勤+4 次讲座观后感\"构成,以\"合格/不合格\"记考核结果。考核结果在大三春季学期(即第 6 个学期)期末显示,前 5 个学期以 IP(In progress,考核中)记录。\n5. 思想政治实践分为上、下两门课程(各 1 学分)。思想政治实践(上)包括\"爱乐传习\"和\"志愿服务\"两个课程模块,学生可任选其一,以\"合格/不合格\"记考核结果。思想政治实践(下)包括\"社会实践\"模块,其成绩由\"实践方案评估(10%)+课堂出勤、参与情况(20%)+任课教师评分(10%)+团队评议(15%)+个人实践总结(15%)+团队总结展示得分(30%)\"构成,以百分制记考核结果。在未完成上述两门课程的要求之前均以 IP(In progress,考核中)记录。\n\n【附则】\n1. 本办法自 2023 级本科生开始实行。2022 年(含)之前入学的学生沿用旧的教学管理办法。\n2. 本办法经学校教务部批准,由马克思主义学院、校团委负责解释上述相关事宜。",
+        courses: [
+          { id: "sx1", name: "习近平新时代中国特色社会主义思想概论", credit: 3, meta: "3学时/周", semester: ["大一秋","大一春"] },
+          { id: "sx2", name: "思想道德与法治", credit: 3, meta: "3学时/周", semester: ["大一秋","大一春"] },
+          { id: "sx3", name: "中国近现代史纲要", credit: 3, meta: "3学时/周", semester: ["大一秋","大一春"] },
+          { id: "sx4", name: "马克思主义基本原理", credit: 3, meta: "3学时/周", semester: ["大二秋","大二春"] },
+          { id: "sx5", name: "毛泽东思想和中国特色社会主义理论体系概论", credit: 3, meta: "3学时/周", semester: ["大二秋","大二春"] },
+          { id: "sx6a", name: "形势与政策(大一秋)", credit: 0, meta: "班级教学,1学分16学时", semester: "大一秋" },
+          { id: "sx6b", name: "形势与政策(大一春)", credit: 0, meta: "选修讲座", semester: "大一春" },
+          { id: "sx6c", name: "形势与政策(大二秋)", credit: 0, meta: "选修讲座", semester: "大二秋" },
+          { id: "sx6d", name: "形势与政策(大二春)", credit: 0, meta: "选修讲座", semester: "大二春" },
+          { id: "sx6e", name: "形势与政策(大三秋)", credit: 0, meta: "选修讲座", semester: "大三秋" },
+          { id: "sx6f", name: "形势与政策(大三春)", credit: 2, meta: "考核结果在本学期显示", semester: "大三春" },
+          { id: "sx7a", name: "思想政治实践(上)", credit: 1, meta: "爱乐传习/志愿服务任选其一", semester: ["大一秋","大二秋","大三秋"] },
+          { id: "sx7b", name: "思想政治实践(下)", credit: 1, meta: "社会实践", semester: ["大一春","大二春","大三春"] },
+        ]
+      },
+      {
+        id: "sx_selective",
+        name: "思想政治 · 选择性必修",
+        require: "3 学分",
+        min: 3, max: 3,
+        desc: "【修读要求】\n自 2021 级普通本科生开始,学生毕业前须修读完成一门本科生思政选择性必修课。因降级转系转专业、延期毕业、休学等情况没有如期毕业的学生,对其思政选择性必修课修读的要求,遵照其所绑定的培养方案要求。\n\n【课程设置】\n学校遴选、认定以及新建符合要求的\"四史\"类课程,形成\"本科生思政选择性必修课课程目录\",目录中的课程包括专业必修课、专业选修课、通识教育课、全校公选课等,不改变原有课程属性。学生修读完成其中的课程后,既可完成思政选择性必修课修读要求,又可将课程学分计入其培养方案对应的课程体系中。本科生思政选择性必修课课程目录每学期更新,请参见每学期选课手册。\n\n【考核与成绩评定】\n各门课程的考核方式与成绩评定方法,按照《北京大学本科生学籍管理办法》《北京大学本科考试工作与学习纪律管理规定》《北京大学本科生成绩评定和记载办法》等相关规章制度,由各课程确定。",
+        courses: [
+          { id: "p3", name: "思政选择性必修", credit: 3, meta: "毕业前须修读一门", semester: "任意" },
+        ]
+      },
+      {
+        id: "english",
+        name: "大学英语",
+        require: "2~8 学分",
+        min: 2, max: 8,
+        desc: "【修读要求】\n1. 所有新生(英语专业学生和留学生除外)入学后需参加大学英语分级考试,根据考试成绩编入 Y 级、A 级、B 级、C 级和 C+级,分别对应 8 学分、8 学分、6 学分、4 学分和 2 学分的\"公共必修课\"大学英语课程学分要求,按编入级别修读相应模块的课程。\n2. 未参加分级考试的学生,统一编入 A 级。编入 C+级的学生:①可自愿申请免修大学英语课程:需参加免修考试,成绩优异者免修大学英语课程,并获 2 学分;②可自愿申请转入 C 级修读 4 学分:需在分级后两周内提出书面申请。\n3. 原则上每位学生每学期修读一门大学英语课程;在入学后三年内(含暑期学校)修完大学英语课程学分。\n4. 大学英语教研室开设的暑期课程属于大学英语必修课程。\n\n【课程设置】\n大学英语课程体系分五个级别,包括预备目标课程(Y 级)、基础目标课程(A 级)、提高目标课程(B 级)、发展目标课程(C 级)和卓越目标课程(C+级);采用知识与能力目标可选、课程可选的弹性必修学分制和模块化教学方案,充分体现差异化、个性化,满足学生不同的专业和个人发展需要。\n• 预备目标课程(Y 级):通用英语课程(YG)\n• 基础目标课程(A 级):通用英语课程(AG)、跨文化交际课程(AC)\n• 提高目标课程(B 级):通用英语课程(BG)、跨文化交际课程(BC)\n• 发展目标课程(C 级):通用英语课程(CG)、跨文化交际课程(CC)、专门用途英语课程(CS)\n• 卓越目标课程(C+级):批判性思维与学术写作\n\n【考核与成绩评定】\n1. 大学英语课程考核与成绩评定按照《北京大学本科生学籍管理办法》和《北京大学本科考试工作与学习纪律管理规定》的有关规定执行。\n2. 大学英语课程成绩依据学生的出勤情况、课堂表现、平时作业、阶段测验、期中和期末考试成绩等综合评定。\n3. 学生如因病假、事假、外出实习等原因不能按时参加期末考试,需按照《北京大学本科生学籍管理办法》规定的程序提前办理请假缓考手续。凡未办理缓考手续者按缺考处理。\n\n本方案经北京大学教务部批准,自 2024 级北京大学本科生开始执行,由北京大学外国语学院英语系大学英语教研室负责解释。",
+        images: ["media/英语修读要求/image-20260816214815282.png", "media/英语修读要求/image-20260816214950601.png"],
+        courses: [
+          { id: "p1", name: "大学英语", credit: 4, meta: "2~8学分,按水平分班,3年内修完", semester: "任意" },
+        ]
+      },
+      {
+        id: "cs_basic",
+        name: "计算机基础",
+        require: "6 学分",
+        min: 6, max: 6,
+        desc: "【修读要求】\n公共计算机课理科 6 学分。\n1. \"计算概论\",3 学分,文理必修。\n2. \"数据结构与算法\",3 学分,理科选修。\n\n【课程设置】\n同一课程面向所有院系都在同一时间开设,学生自由选择一个班上课,学生在选理论课的同时,要选相应的上机课程。同一课程将统一课程大纲、统一考试内容和考试时间(根据机房容量,上机实习、机考可能分批进行)。\n\n1. \"计算概论\"系列课程(均为大一上学期)\n   a. \"计算概论 A(实验班)\":面向信息科学技术学院和元培学院相关专业(计算机类和电子信息类),有较好编程基础,并通过上机考试筛选的学生。\n   b. \"计算概论 A\":面向信息科学技术学院和元培学院相关专业(计算机类和电子信息类)学生(采用编程语言:C/C++)。\n2. \"数据结构与算法\"系列课程\n   a. \"数据结构与算法(A)\"(实验班)(大二上学期):面向信息科学技术学院和元培学院相关专业(计算机类和电子信息类),有较好编程基础,并通过机考试筛选学生。\n   b. \"数据结构与算法(A)\"(大二上学期):面向信息科学技术学院和元培学院相关专业(计算机和智能专业)学生。\n\n【考核与成绩评定】\n公共计算机课程考核与成绩评定按照《北京大学本科生学籍管理办法》和《北京大学本科考试工作与学习纪律管理规定》的有关规定执行。公共计算机课程注重综合能力考核,学期成绩包括平时作业、随堂测验、上机考试和期末笔试等,具体比例和考核方式由各课程组确定。",
+        courses: [
+          { id: "p5a", name: "计算概论 A(实验班)", credit: 3, meta: "C/C++,需同时选上机课;需通过上机考试筛选", semester: "大一秋" },
+          { id: "p5b", name: "计算概论 A", credit: 3, meta: "C/C++,需同时选上机课", semester: "大一秋", desc: "\"计算概论 A\"课程简介\n\n课程编号:04830041  开课学期:秋季学期\n课程名称:计算概论 A  学分:3\n总学时:64 学时理论课(每周 4 学时)+32 学时上机实习课(每周 2 学时)\n\n一、基本目的\n1. 讲授计算机语言程序设计基础,使学习者掌握程序设计的基本概念、基本方法,并且在实践环节逐步掌握程序设计的技巧,并且建立良好的编程习惯,写出规范的程序代码。\n2. 在学习过程中,学生将通过程序的结构和相应的语句,写出计算机程序,这是学生必须掌握的基本功。注重学生对问题抽象能力的培养,学习如何把要解决实际的问题用数学的形式表示以及符号化的方法处理。注重训练学生逻辑思维的能力,学习如何分析问题,确定解题思路。\n3. 解决实际问题是最终的目标,因此,程序的调试也是必不可少的学习内容。\n\n二、教学内容\n第 1 章 计算机与信息社会\n重点:计算机和互联网的发展历程,二进制数制表示、运算及数制编码原理。\n要求:了解计算机和互联网的发展历程和现状;熟练掌握二进制数制表示、二进制运算及数值二进制编码原理。\n\n第 2 章 互联网与信息共享\n重点:互联网的硬件设施、通信协议和基本应用,动手接入互联网的基本知识。\n要求:了解互联网的硬件设施和通信协议在互联网中的角色和作用;熟悉互联网中的各类基本应用;了解自己动手组建局域网、接入互联网的相关实践知识。\n\n第 3 章 计算机的基本组成\n重点:计算机的结构及硬件组成,计算机系统的软件层次。\n要求:掌握计算机的 CPU、总线、内存和外设等设备部件之间的硬件组成关系;了解各种类型的计算机部件设备;掌握计算机\"硬件、操作系统、系统软件、应用软件\"的软硬件层次关系;了解计算机硬件装配过程和软件系统安装过程。\n\n第 4 章 信息表示与信息输入输出\n重点:声音、颜色、图像、文字等信息二进制编码的基本原理。\n要求:掌握声音、颜色、图像、文字等信息二进制编码的基本原理;了解多媒体信息文件格式及编码与压缩技术,了解常用的多媒体软件;了解人机交互技术。\n\n第 5 章 信息存储\n重点:计算机存储系统从寄存器、高速缓存、内存到外存的层次结构。\n要求:掌握计算机存储系统层次结构及各层次存储器件的特点;了解磁盘、光盘和闪存(U 盘)的存储原理。\n\n第 6 章 CPU 的信息处理\n重点:CPU 的工作原理、指令及指令周期的概念;CPU 访问主存储器的工作原理。\n要求:了解图灵机计算的原理;掌握 CPU 的内部组成,及指令在 CPU 中执行的过程;掌握 CPU 访问主存储器的工作原理;了解数据(整数、浮点数)在主存储器中存储和表示。\n\n第 7 章 计算机软件与硬件的协同工作\n重点:操作系统的功能和作用,文件系统的概念和使用。\n要求:了解操作系统引导过程,了解操作系统的主要功能和典型的操作系统的实例;了解文件系统组织文件的原理和方法;了解信息安全的基本概念,初步了解加密技术和计算机病毒防范技术。\n\n第 8 章 程序设计 - 入门篇\n重点:程序设计的要素和过程,高级程序设计语言的特点,C 语言程序示例及程序规范。\n要求:理解程序设计从问题抽象到程序测试的整个过程;了解设计语言从机器语言到汇编语言再到高级程序设计语言的发展过程;理解示例程序处理问题的过程和程序执行的关系;掌握正确的规范化的程序设计。\n\n第 9 章 程序设计 - 基本框架\n重点:变量、常量、数据类型和表达式;指令流的控制;控制台输入和输出。\n要求:掌握变量、常量、数据类型和表达式等 C 语言中的基本概念;掌握语句顺序执行和分支循环语句对程序执行过程的控制;掌握基本的控制台输入输出方法;通过初等算法综合应用本章所学的语言点。\n\n第 10 章 程序设计 - 数组和结构\n重点:数组、结构、指针、字符串等数据类型;内存动态申请与释放;文件操作;排序和查找问题。\n要求:熟练掌握数组、结构两种复合数据结构的概念和使用;理解指针的概念和使用指针操作数据的特点,掌握字符串的概念和使用;了解通过指针和动态内存构造运行时刻才确定长度的数组;了解基本的文件操作函数;掌握最基本的排序和查找算法。\n\n第 11 章 程序设计 - 函数\n重点:函数的参数传递;变量作用域;递归调用的概念及应用。\n要求:掌握函数的定义与调用,理解值参和形参的差别;理解全局变量和局部变量的生命期,了解变量的作用域范围与代码块的关系;了解模块化程序设计思想(问题分解与抽象);掌握函数递归调用的原理及特点。\n\n第 12 章 问题分析与算法设计\n重点:程序设计优劣的判断标准(算法的时间复杂性);递归与分治、搜索与回溯、动态规划等一般的算法设计方法与思想。\n要求:了解程序设计的一般性经验,了解程序设计优劣的判断标准(即算法的时间复杂性和空间复杂性);掌握应用递归方法解决具有递归结构的问题,了解分治方法对提高一般递归算法运行速度的作用;掌握应用系统的搜索方法求解问题,了解回溯对提高搜索性能上的作用;掌握应用动态规划的方法求解一般的最优化问题,了解动态规划自顶向下分解问题,自底向上求解问题的程序设计方法;了解 NPC 问题的性质,认识一些常见的 NPC 问题。\n\n三、教学方式\n本课程课时安排为 4 学时/周,共 64 学时,包括课堂教授和上机,不同的教学班级,可以根据实际的需要适当调整课堂讲授和上机的学时分配。课程教学的环节包括:教师课堂讲授,学生在线实践及教师、助教现场辅导,学生利用网络课件和网络资源自学,学生课后作业和小组合作,教师、助教网络答疑和网络讨论等。除了传统的教学方式方法之外,我们尤其注重实践能力和创新能力的培养,设计了多种有特色的教学方法和教学手段,包括在线实践、多层次教学辅导、在线考试、与大学生程序设计竞赛相结合、定期的教学交流与讨论等。" },
+          { id: "p6a", name: "数据结构与算法(A)(实验班)", credit: 3, meta: "需通过机考筛选", semester: "大二秋" },
+          { id: "p6b", name: "数据结构与算法(A)", credit: 3, meta: "", semester: "大二秋" },
+        ]
+      },
+      {
+        id: "pe",
+        name: "体育",
+        require: "4 学分",
+        min: 4, max: 4,
+        desc: "### 大学体育课程\n\n#### 修读要求\n\n1. 体育课为全校公共必修课程,须修满 4 学分。其中,必选项目学分 1 学分,兴趣选修项目 3 学分。其中选修训练竞赛项目所获学分可抵扣兴趣选修项目学分,上限为 2 学分。每学期只能选 1 门体育必修课;每门课程每周 2 学时(不含训练竞赛项目),1 学分。\n\n2. 训练竞赛项目申请细则:\n   - 从 2025 级开始,对于非正式注册普通生体育代表队的学生,若符合特定条件(达到国家二级运动员以上等级或在体质健康测试中成绩达到 85 分及以上),即有资格申请选修训练竞赛项目(即普通生体育代表队)。学生须提交书面申请及相关证明材料,经训练竞赛项目专家组认定通过后,可加入普通生代表队,按照项目考核要求参加日常训练,可获得体育训练竞赛项目课 1 学分。\n   - 从 2025 级开始,对于已正式注册为普通生代表队的学生,若在赛事中取得优异成绩,经训练竞赛项目专家组认定后,可获得体育训练竞赛项目课 1 学分。\n\n3. 在完成体育必修课程的基础上,鼓励同学们在校期间结合个人兴趣,积极参与 1～2 个学校体育社团或院系体育俱乐部活动,享受兴趣、增强素质、健全人格、锤炼意识,丰富校园生活。\n\n#### 考核与成绩评定\n\n1. **体育必修课程成绩结构**\n   - 传统武术类项目课程、时尚舞美类项目课程:100 分 = 技术 40 分 + 体质健康测试 20 分 + 专项理论 10 分 + 学习态度 20 分 + 12 分钟跑 10 分;\n   - 其他体育必修课:100 分 = 技术 50 分 + 体质健康测试 20 分 + 专项理论 10 分 + 学习态度 20 分。\n\n2. **体质健康测试**\n   2022 年及以后入学的学生:无论是否选修体育课,每学年必须至少参加一次体质健康测试。学生毕业时的体质健康测试成绩,按毕业当年学年总分的 50%与其他学年总分平均得分的 50%之和进行评定。学生毕业时,体质健康测试成绩(按照《标准》测试)达不到 50 分者按结业或肄业处理。学生因病或残疾可向体育教研部提交暂缓或免于执行《标准》的申请。确实丧失运动能力、被免予执行《标准》的学生,仍可参加评奖评优,毕业时体质健康测试成绩需注明免测。体测成绩低于 50 分者,必选为提高体能而设置的体育必修课程:\u201c体能提升:运动与膳食\u201d\u201c体适能\u201d或者\u201c健身健美\u201d。选训练竞赛项目的学生须按照学校体质健康测试办法,正常参加体质健康测试。\n\n3. **课外体育锻炼**\n   课外锻炼是体育课程的一部分,学生选上体育必修课的学期,必须参加 85 公里课外体育锻炼并达到相应要求。未达要求的,体育课成绩记 0 分。学生选上训练竞赛项目的学期须完成每周课程要求的训练任务,可免除课外体育锻炼。\n\n#### 课程介绍\n\n1. **本科生体育必修课程**\n\n（1）**必选项目**\n传统武术类项目(男生);时尚舞美类项目(女生)。传统武术类项目:24 式简化太极拳(男生)、汉字太极与养生、导引与养生、无极球、非遗太极拳(王其和式)。时尚舞美类项目:健美操、艺术体操、健美操有氧舞蹈、体美。\n\n（2）**兴趣选修项目**\n共 38 个,每学期开设项目略有调整。游泳、网球、羽毛球、篮球、体适能、乒乓球、棒垒球、匹克球、骑行教育、击剑、中华毽、拓展训练、排球、地板球、高尔夫、定向与徒步运动、拳击、射箭、柔道、健身健美、足球、太极拳(女)、体育舞蹈、瑜伽、壁球、跆拳道、体能提升:运动与膳食、飞盘运动、龙舟、舞龙舞狮、国际象棋、剑道、安全教育与自卫防身、手球、游泳提高班、羽毛球提高班、篮球提高班、乒乓球提高班。\n\n（3）**训练竞赛项目**\n16 支普通生体育代表队,每学期开设项目略有调整。课程名称及课号:\u201c竞赛训练(一)\u201d04130010、\u201c竞赛训练(二)\u201d04130011。课程项目包括:女足、男足、女篮、男篮、女子排球、男子排球、匹克球、田径(中长跑)、游泳、赛艇、太极拳、健美操(啦啦操)、艺术体操、综合体能队(CROSSFIT)、定向运动、攀岩。\n\n（4）**体育保健**\n体育保健课是专为身体异常、特型,以及病(心脏病、高血压、癫痫、哮喘等不宜从事较为剧烈体育活动的疾病)、残、弱和特殊群体的学生开设的,以指导康复、保健为主的体育课程,属于体育必修课程,学生选修此课须提交校医院保健科的诊断证明,经任课教师同意后方可上课。\n\n（5）**航空体育**\n航空体育是双学籍飞行员学生必修课,须修满 6 学分。\n\n（6）**高级体育训练课**\n高级体育训练课是 2024 年以前入学的体育特长生必修课,须修满 9 学分。\n\n2. **其他体育课程(不占体育必修课学分)**\n\n（1）通选课:奥林匹克文化课(2 学分),户外探索(2 学分)。\n\n（2）公共选修课:运动营养与减肥(1 学分)、围棋(1 学分)、运动健身方法与实践(1 学分)、体育文化与创新精神(2 学分)、数字体育(2 学分)、运动损伤预防与处理(2 学分)、国际象棋提高班(1 学分)、乒乓球国际竞赛法和赛事组织(2 学分)。\n\n（3）暑期学校留学生课:骑行老北京城:探索千年古都回响(2 学分)。\n\n#### 教学管理办法\n\n1. **体育课程管理办法**\n（1）学生修体育课学分,可以自主选择课程、任课教师、上课时间。\n（2）学生获得体育必修课程 4 学分,达到《国家学生体质健康标准》的相关要求,是毕业和获得学位的必要条件。其中,男生必修传统武术类项目,女生必修时尚舞美类项目。\n\n2. **班级及课堂管理办法**\n（1）体育必修课每班人数根据项目特点和场馆器材条件,在 16～30 人之间,每班最多为 30 人,少于 16 人的班原则上取消。奥林匹克文化通选课人数最多为 100 人、围棋为 90 人。开课后学生不能擅自换班;考虑到体育课的安全问题,不允许非本班学生旁听课程。\n（2）学生通过教务部系统自行选课,原则上不再办理中期退课,如有特殊情况(如意外受伤、疾病等经医院诊断不能继续该课程学习)需退课,由学生本人写退课申请,提供诊断证明,任课教师签字,并报体育教研部教学主任批准后方可到体育教研部本科教务办公室办理退课。\n（3）学生要注意自身和同学的安全,在课上出现胸闷、心慌、头晕等不适状况,或身体处于疲弱状态,或发现其他同学出现不适,应及时告知任课教师,由教师根据情况处理。\n（4）学生上课应按照所选项目的要求,穿着合适的、有利于运动的运动服、运动鞋。不允许穿便装、牛仔服、皮鞋、拖鞋(游泳课除外);不允许戴围巾、戴太阳镜、接打手机、戴耳机等;女同学上课不允许披肩发。课前应根据相应项目的要求准备好所需的体育器材(如球拍),选修游泳课的学生应准备好游泳衣、游泳裤、游泳帽、游泳镜等。\n（5）选修训练竞赛项目的学生须严格按照《北京大学普通生体育代表队管理办法》完成选修学期的训练与竞赛要求。\n\n3. **关于考勤、缓考和旷考的处理办法**\n（1）考勤:学生出勤情况和课堂表现是评定学习态度的依据。每旷课一次扣 3 分,私假一次扣 2 分,公假一次扣 1 分(须提供院系或相关部门证明),病假一次扣 1 分(须提供校医院医疗诊断证明),迟到和早退一次各扣 1 分,扣满 15 分为止。一学期缺课累计超过该门课程学期总学时数三分之一者,不得参加该课程考试,该课程成绩以\u201c0\u201d分记。\n（2）缓考:因伤、病或其他个人特殊原因不能参加课程考试时,应在考试前向任课教师提出书面缓考申请(缓考审批单),提交医院诊断证明等相关材料,经任课教师同意后可不参加该学期的考试,同时将批准后的缓考审批单提交至体育教研部本科教务办公室(五四体育中心 203 室)办理缓考,期末成绩记录为缓考。学生务必在下学期开学两周内联系原任课教师考试,获得成绩后由原任课教师将成绩单提交至体育教研部本科教务办公室。\n（3）旷考:学生无故未参加一项或若干项考试,未考项成绩为 0 分,各项累加后体育课总成绩不论是否超过 60 分均按照实际成绩记载。",
+        courses: [
+          { id: "p8", name: "体育(必选项目)", credit: 1, meta: "必选项目", semester: ["大一秋","大一春"] },
+          { id: "p9", name: "体育(兴趣选修)", credit: 3, meta: "兴趣选修项目", semester: "任意" },
+        ]
+      },
+      {
+        id: "military",
+        name: "军事理论",
+        require: "2 学分",
+        min: 2, max: 2,
+        desc: "【修读要求】\n1. 学分及选课安排\n军事理论课纳入北京大学人才培养体系,列入学校人才培养方案和教学计划,实行学分制管理,课程考核成绩记入学籍档案。\n军事理论教学时数原则上为 36 学时,可根据学校每学期教学时间安排适当调整,记 2 学分;原则上,军事理论课的修读时间为大一上或下学期,采取按院系分配教学班选课,个别选课有冲突的学生,在其他教学班人数可以容纳的情况下,可以申请选其他教学班的课或者大二年级申请选课。\n\n2. 内容提要及相应学时分配\n第一章 中国国防(10 学时)\n第二章 国际战略环境与国家安全(6 学时)\n第三章 军事思想(6 学时)\n第四章 现代战争(8 学时)\n第五章 信息化战争、智能化战争(6 学时)\n\n3. 教学方式\n主要聘请中国人民解放军国防大学教师进行课堂讲授。\n\n4. 学生成绩评定办法\n平时考勤及课堂表现占总成绩的 20%;期末闭卷考试,占总成绩的 80%。平时考勤采取抽查方式。抽查到 3 次旷课的学生取消考试资格。\n期末闭卷考试内容以老师课堂讲授内容为主,采取简答、论述等题型。重点考查学生听课情况及对所授课题内容的掌握、理解和认识程度。",
+        courses: [
+          { id: "p7", name: "军事理论", credit: 2, meta: "36学时", semester: "大一秋" },
+        ]
+      },
+      {
+        id: "labor",
+        name: "劳动教育",
+        require: "1 学分",
+        min: 1, max: 1,
+        desc: "【修读要求】\n自 2021 级普通本科生开始,劳动教育纳入各专业培养方案必修要求,学生在本科阶段劳动教育学时累计不少于 32 学时。学生可通过修读\"劳动教育课程目录\"中的一门或多门课程,累计劳动教育学时。因降级转系转专业、延期毕业、休学等情况没有如期毕业的学生,对其劳动教育学时的要求,遵照其所绑定的培养方案。\n\n【课程设置】\n学校开设劳动教育课程,遴选、认定以及新建符合要求的课程形成\"劳动教育课程目录\",目录中每门课程均有对应的劳动教育学时(包括劳动教育理论学时和劳动教育实践学时)。目录中的课程不改变原有课程属性,学生修读完成后既可累计对应劳动教育学时,又可将课程学分计入其培养方案对应的课程体系中(如专业必修、专业选修、通识课等)。\n\n劳动教育课程分为以下几类:\n1. 劳动教育理论慕课。现开设有\"新时代劳动理论\"(1 学分,计 16 个劳动教育学时)、\"新时代劳动者十讲\"(0 学分,计 8 个劳动教育学时)两门劳动教育理论慕课,非必修、非网选,学生可在大一至大三任何时间在指定平台上选修,选修慕课的学生原则上应在大四第一学期开学前完成修读。\n2. 全校公共劳动教育(模块)课程。学校将符合劳动教育理念的通识课、全校公选课认定为劳动教育(模块)课程,计对应劳动教育学时。\n3. 专业劳动教育(模块)课程。各院系将劳动教育有机纳入专业教育中,建设专业劳动课程或在专业课程中设置劳动教育模块,计对应劳动教育学时。课程目录每学期更新,请参见每学期选课手册。\n\n【考核与成绩评定】\n各门课程的考核方式与成绩评定方法,按照《北京大学本科生学籍管理办法》《北京大学本科考试工作与学习纪律管理规定》《北京大学本科生成绩评定和记载办法》等相关规章制度,由各课程确定。",
+        courses: [
+          { id: "p4", name: "劳动教育", credit: 1, meta: "累计不少于32学时", semester: "任意" },
+        ]
+      },
+    ]
+  },
+  {
+    id: "general_edu",
+    name: "通识教育课程",
+    require: "12 学分",
+    min: 12, max: 12,
+    desc: "### 元培学院通识课方案\n\n**毕业要求:通识教育课程 12 学分** = 新生讨论课 1 学分 + 通识选修课 11 学分。\n\n**【修读要求】**\n1. 新生讨论课:1 学分,大一秋季学期修读。\n2. 通识选修课:11 学分,在以下六个类别中选修。\n\n**【各类别选修要求】**\n- **人文社科学生**:第Ⅰ、Ⅱ、Ⅴ类至少各选 1 门,第Ⅲ/Ⅳ类至少选 1 门。\n- **理工科学生**:第Ⅰ/Ⅱ类至少选 1 门,第Ⅲ/Ⅳ类至少选 1 门。\n\n**【类别说明】**\n- 第Ⅰ类:中国古典文明\n- 第Ⅱ类:西方古典文明\n- 第Ⅲ类:现代中国\n- 第Ⅳ类:现代世界\n- 第Ⅴ类:现代科学\n- 第Ⅵ类:艺术类\n\n**【说明】**\n1. 下方为大一秋季开设课程列表,其他学期课程以每学期通识课目录为准。\n2. 新生讨论课为新生必修,建议大一秋季完成。\n3. 各类别课程学分不能相互替代,具体以元培学院培养方案为准。",
+    courses: [
+      // 新生讨论课
+      { id: "g0", group: "新生讨论课", name: "新生讨论课", credit: 1, meta: "1 学分 · 大一秋季", semester: "大一秋" },
+      // 第Ⅰ类:中国古典文明
+      { id: "g1a", group: "Ⅰ类·中国古典文明", name: "《庄子》精读", credit: 2, meta: "课号 02333202 · 哲学系 · 杨立华", semester: "大一秋" },
+      { id: "g1b", group: "Ⅰ类·中国古典文明", name: "《史记》解读", credit: 2, meta: "课号 02132864 · 历史学系 · 李霖", semester: "大一秋" },
+      { id: "g1c", group: "Ⅰ类·中国古典文明", name: "中国通史（古代部分）", credit: 2, meta: "课号 02132750 · 历史学系 · 陈侃理", semester: "大一秋" },
+      // 第Ⅱ类:西方古典文明
+      { id: "g2a", group: "Ⅱ类·西方古典文明", name: "《理想国》", credit: 3, meta: "课号 02332976 · 哲学系 · 吴飞", semester: "大一秋" },
+      // 第Ⅲ类:现代中国
+      { id: "g3a", group: "Ⅲ类·现代中国", name: "中国社会研究（政治学）", credit: 3, meta: "课号 03232880 · 元培学院 · 焦长权", semester: "大一秋" },
+      // 第Ⅳ类:现代世界
+      { id: "g4a", group: "Ⅳ类·现代世界", name: "国外社会学学说（上）", credit: 2, meta: "课号 03100130 · 社会学系 · 孙飞宇", semester: "大一秋" },
+      { id: "g4b", group: "Ⅳ类·现代世界", name: "社会研究：经典与方法", credit: 2, meta: "课号 03130903 · 社会学系 · 渠敬东", semester: "大一秋" },
+      { id: "g4c", group: "Ⅳ类·现代世界", name: "伊斯兰教与现代世界", credit: 2, meta: "课号 02131810 · 历史学系 · 昝涛", semester: "大一秋" },
+      // 第Ⅴ类:现代科学
+      { id: "g5a", group: "Ⅴ类·现代科学", name: "创新产品研发基础", credit: 2, meta: "课号 04631042 · 元培学院 · 陈江", semester: "大一秋" },
+      { id: "g5b", group: "Ⅴ类·现代科学", name: "生物进化论", credit: 2, meta: "课号 01130780 · 生命科学学院 · 张蔚、遇赫、姚蒙", semester: "大一秋" },
+      { id: "g5c", group: "Ⅴ类·现代科学", name: "普通生物学(B)", credit: 3, meta: "课号 01139380 · 生命科学学院 · 佟向军", semester: "大一秋" },
+      { id: "g5d", group: "Ⅴ类·现代科学", name: "演示物理学", credit: 2, meta: "课号 00430109 · 物理学院 · 李湘庆", semester: "大一秋" },
+      // 第Ⅵ类:艺术类
+      { id: "g6a", group: "Ⅵ类·艺术类", name: "色彩的审美实践", credit: 2, meta: "课号 04631818 · 元培学院 · 徐紫迪", semester: "大一秋" },
+    ]
+  },
+  {
+    id: "major",
+    name: "专业课程",
+    children: [
+      {
+        id: "major_required",
+        name: "专业必修课程",
+        require: "55 学分",
+        min: 55, max: 55,
+        desc: "【修读要求】\n专业必修课程为本专业核心培养模块,共 55 学分,包括专业基础课、专业核心课与毕业论文(设计)三部分,是获得本专业学位的必修要求。\n\n【课程设置】\n1. 专业基础课:19 学分,可在任意学期选修,为本专业入门与基础理论课程,为后续核心课打基础。\n2. 专业核心课:32 学分,可在任意学期选修,为本专业主干课程,系统讲授专业核心理论与方法。\n3. 毕业论文(设计):4 学分,大三春季学期开设,为本科阶段综合性学术训练环节。\n\n【说明】\n建议按基础课→核心课→毕业论文的顺序修读,部分核心课有先修课要求,具体以各院系培养方案为准。",
+        children: [
+          {
+            id: "major_basic",
+            name: "专业基础课",
+            require: "19 学分",
+            min: 19, max: 19,
+            desc: "专业基础课:19 学分\n\n课程列表:\n| 课号 | 课程名称 | 课程性质 | 学分 | 总学时 | 实践总学时 | 选课学期 |\n| ---- | -------- | -------- | ---- | ------ | ---------- | -------- |\n| 00132511 | 高等数学A(一) | 专业必修 | 5 | 68 | 32 | 大一/上 |\n| 00132512 | 高等数学A(二) | 专业必修 | 5 | 68 | 32 | 大一/下 |\n| 00132611 | 线性代数A(Ⅰ) | 专业必修 | 4 | 68 | 32 | 大一/上 |\n| 00132612 | 线性代数A(Ⅱ) | 专业必修 | 4 | 68 | 32 | 大一/下 |\n| 04830010 | 信息科学技术概论 | 专业必修 | 1 | 34 | 0 | 大一/上 |",
+            courses: [
+              { id: "m1a", name: "高等数学A(一)", credit: 5, meta: "课号 00132511 · 总学时 68(实践 32)", semester: "大一秋" },
+              { id: "m1b", name: "高等数学A(二)", credit: 5, meta: "课号 00132512 · 总学时 68(实践 32)", semester: "大一春" },
+              { id: "m1c", name: "线性代数A(Ⅰ)", credit: 4, meta: "课号 00132611 · 总学时 68(实践 32)", semester: "大一秋" },
+              { id: "m1d", name: "线性代数A(Ⅱ)", credit: 4, meta: "课号 00132612 · 总学时 68(实践 32)", semester: "大一春" },
+              { id: "m1e", name: "信息科学技术概论", credit: 1, meta: "课号 04830010 · 总学时 34", semester: "大一秋" },
+            ]
+          },
+          {
+            id: "major_core",
+            name: "专业核心课",
+            require: "32 学分",
+            min: 32, max: 32,
+            desc: "专业核心课:32 学分\n\n课程列表:\n| 课号 | 课程名称 | 课程性质 | 学分 | 总学时 | 实践总学时 | 选课学期 |\n| ---- | -------- | -------- | ---- | ------ | ---------- | -------- |\n| 04834040 | 人工智能引论 | 专业必修 | 3 | 51 | 0 | 大一/下 |\n| 04835060 | 人工智能中的数学 | 专业必修 | 4 | 68 | 6 | 大二/上 |\n| 04835000 | 可视计算与交互概论 | 专业必修 | 4 | 68 | 4 | 大二/上 |\n| 04835030 | 计算机视觉 | 专业必修 | 3 | 51 | 3 | 大二/上 |\n| 04830281 | 算法设计与分析 | 专业必修 | 3 | 51 | 17 | 大二/下 |\n| 04835120 | 自然语言处理基础 | 专业必修 | 3 | 51 | 3 | 大二/下 |\n| 04831730 | 机器学习概论 | 专业必修 | 3 | 51 | 8 | 大三/上 |\n| 04835750 | 具身智能与通用智能体 | 专业必修 | 3 | 51 | 0 | 大三/上 |\n| 04835070 | 认知推理 | 专业必修 | 3 | 48 | 4 | 大三/上 |\n| 04835080 | 多智能体基础 | 专业必修 | 3 | 51 | 0 | 大三/下 |\n\n可替代课程列表:\n| 课号 | 课程名称 | 学分 | 总学时 | 实践总学时 | 替代课程 |\n| ---- | -------- | ---- | ------ | ---------- | -------- |\n| 04833420 | 机器学习 | 3 | 51 | 0 | 机器学习概论 |\n| 04835230 | 人工智能基础 | 3 | 51 | 17 | 人工智能引论 |",
+            courses: [
+              { id: "m2f", name: "人工智能引论", credit: 3, meta: "课号 04834040 · 总学时 51", semester: "大一春", alt: "m2f_alt" },
+              { id: "m2f_alt", name: "人工智能基础(替代课)", credit: 3, meta: "课号 04835230 · 总学时 51(实践 17) · 替代「人工智能引论」", semester: "大一春", alt: "m2f", isAlt: true },
+              { id: "m2g", name: "人工智能中的数学", credit: 4, meta: "课号 04835060 · 总学时 68(实践 6)", semester: "大二秋" },
+              { id: "m2h", name: "可视计算与交互概论", credit: 4, meta: "课号 04835000 · 总学时 68(实践 4)", semester: "大二秋" },
+              { id: "m2i", name: "计算机视觉", credit: 3, meta: "课号 04835030 · 总学时 51(实践 3)", semester: "大二秋" },
+              { id: "m2j", name: "算法设计与分析", credit: 3, meta: "课号 04830281 · 总学时 51(实践 17)", semester: "大二春" },
+              { id: "m2k", name: "自然语言处理基础", credit: 3, meta: "课号 04835120 · 总学时 51(实践 3)", semester: "大二春" },
+              { id: "m2l", name: "机器学习概论", credit: 3, meta: "课号 04831730 · 总学时 51(实践 8)", semester: "大三秋", alt: "m2l_alt" },
+              { id: "m2l_alt", name: "机器学习(替代课)", credit: 3, meta: "课号 04833420 · 总学时 51 · 替代「机器学习概论」", semester: "大三秋", alt: "m2l", isAlt: true },
+              { id: "m2m", name: "具身智能与通用智能体", credit: 3, meta: "课号 04835750 · 总学时 51", semester: "大三秋" },
+              { id: "m2n", name: "认知推理", credit: 3, meta: "课号 04835070 · 总学时 48(实践 4)", semester: "大三秋" },
+              { id: "m2o", name: "多智能体基础", credit: 3, meta: "课号 04835080 · 总学时 51", semester: "大三春" },
+            ]
+          },
+          {
+            id: "major_thesis",
+            name: "毕业论文(设计)",
+            require: "4 学分",
+            min: 4, max: 4,
+            desc: "【修读要求】\n毕业论文(设计)为专业必修课程的第三部分,4 学分,大三春季学期开设,为本科阶段综合性学术训练环节。\n\n【说明】\n需在完成专业基础课与核心课的基础上进行,是本科毕业前的总结性环节。",
+            courses: [
+              { id: "m3", name: "毕业论文(设计)", credit: 4, meta: "4学分", semester: "大三春" },
+            ]
+          },
+        ]
+      },
+      {
+        id: "major_elective",
+        name: "专业选修课",
+        require: "20 学分",
+        min: 20, max: 20,
+        desc: "专业选修课:20 学分\n\n须在六个指定方向中按各自最低学分要求选修,各方向最低学分须分别满足,不得相互替代。\n\n(1) 专业数学类:至少选修 3 学分\n(2) 计算基础与编程类:至少选修 8 学分\n(3) 机器感知类:至少选修 3 学分\n(4) 数据与机器智能类:至少选修 4 学分\n(5) 物理与电子类:至少选修 2 学分\n(6) 研究课程(本科生科研训练):0~6 学分,论文内容不能与毕业论文重复使用\n\n各方向课程列表与可替代课程详见下方课程页。",
+        courses: [
+          // (1) 专业数学类(至少 3 学分)
+          { id: "e1a", group: "专业数学类", name: "离散数学基础", credit: 3, meta: "课号 04835310 · 总学时 51 · 大二/上", semester: "大二秋" },
+          { id: "e1a_alt", group: "专业数学类", name: "离散数学与结构(I)(替代课)", credit: 3, meta: "课号 04833400 · 总学时 51 · 替代「离散数学基础」", semester: "大二秋", alt: "e1a", isAlt: true },
+          { id: "e1b", group: "专业数学类", name: "计算方法(B)", credit: 3, meta: "课号 00130280 · 总学时 51 · 大二/上", semester: "大二秋" },
+          { id: "e1b_alt", group: "专业数学类", name: "数值分析(替代课)", credit: 3, meta: "课号 04834770 · 总学时 51(实践 9) · 替代「计算方法(B)」", semester: "大二秋", alt: "e1b", isAlt: true },
+          { id: "e1c", group: "专业数学类", name: "信息论", credit: 2, meta: "课号 04831210 · 总学时 34 · 大二/下", semester: "大二春" },
+          { id: "e1d", group: "专业数学类", name: "代数结构与组合数学", credit: 3, meta: "课号 04830080 · 总学时 51 · 大二/下", semester: "大二春" },
+          { id: "e1e", group: "专业数学类", name: "集合论与图论", credit: 3, meta: "课号 04830070 · 总学时 51 · 大三/上", semester: "大三秋" },
+          { id: "e1f", group: "专业数学类", name: "数理逻辑", credit: 3, meta: "课号 04830090 · 总学时 51 · 大三/上", semester: "大三秋" },
+          { id: "e1g", group: "专业数学类", name: "凸分析与优化方法", credit: 3, meta: "课号 04833410 · 总学时 51 · 大三/下", semester: "大三春" },
+          { id: "e1h", group: "专业数学类", name: "随机过程引论", credit: 2, meta: "课号 04831200 · 总学时 34 · 大三/下", semester: "大三春" },
+          // (2) 计算基础与编程类(至少 8 学分)
+          { id: "e2a", group: "计算基础与编程类", name: "程序设计实习", credit: 3, meta: "课号 04831750 · 总学时 68(实践 20) · 大一/下", semester: "大一春" },
+          { id: "e2b", group: "计算基础与编程类", name: "人工智能中的编程", credit: 3, meta: "课号 04835050 · 总学时 51(实践 3) · 大二/上", semester: "大二秋" },
+          { id: "e2c", group: "计算基础与编程类", name: "计算机系统导论", credit: 5, meta: "课号 04833040 · 总学时 68 · 大二/上", semester: "大二秋" },
+          { id: "e2d", group: "计算基础与编程类", name: "计算机系统导论讨论班", credit: 0, meta: "课号 04832363 · 总学时 34(实践 34) · 大二/上", semester: "大二秋" },
+          { id: "e2e", group: "计算基础与编程类", name: "计算机网络", credit: 4, meta: "课号 04834210 · 总学时 85(实践 34) · 大三/上下", semester: ["大三秋","大三春"] },
+          { id: "e2f", group: "计算基础与编程类", name: "操作系统", credit: 4, meta: "课号 04834260 · 总学时 85(实践 34) · 大三/上下", semester: ["大三秋","大三春"] },
+          { id: "e2g", group: "计算基础与编程类", name: "计算机组织与体系结构", credit: 3, meta: "课号 04830140 · 总学时 51 · 大三/上下", semester: ["大三秋","大三春"] },
+          { id: "e2h", group: "计算基础与编程类", name: "编译原理", credit: 4, meta: "课号 04834200 · 总学时 85(实践 34) · 大三/上下", semester: ["大三秋","大三春"] },
+          // (3) 机器感知类(至少 3 学分)
+          { id: "e3a", group: "机器感知类", name: "脑与认知科学", credit: 2, meta: "课号 04831320 · 总学时 34 · 大二/上", semester: "大二秋" },
+          { id: "e3b", group: "机器感知类", name: "多模态学习", credit: 3, meta: "课号 04835010 · 总学时 51(实践 11) · 大三/上", semester: "大三秋" },
+          { id: "e3c", group: "机器感知类", name: "模式识别导论", credit: 3, meta: "课号 04831290 · 总学时 51 · 大三/上", semester: "大三秋" },
+          { id: "e3d", group: "机器感知类", name: "图像处理", credit: 3, meta: "课号 04831300 · 总学时 51 · 大三/上", semester: "大三秋" },
+          { id: "e3d_alt", group: "机器感知类", name: "数字图像处理(替代课)", credit: 3, meta: "课号 04830320 · 总学时 51(实践 17) · 替代「图像处理」", semester: "大三秋", alt: "e3d", isAlt: true },
+          { id: "e3e", group: "机器感知类", name: "智能机器人概论", credit: 3, meta: "课号 04834990 · 总学时 51(实践 14) · 大三/上", semester: "大三秋" },
+          { id: "e3f", group: "机器感知类", name: "信号与系统", credit: 3, meta: "课号 04830670 · 总学时 51(实践 2) · 大三/上", semester: "大三秋" },
+          { id: "e3g", group: "机器感知类", name: "大模型基础与对齐", credit: 3, meta: "课号 04834390 · 总学时 51 · 大三/下", semester: "大三春" },
+          { id: "e3h", group: "机器感知类", name: "生物信息处理", credit: 2, meta: "课号 04831400 · 总学时 34 · 大三/下", semester: "大三春" },
+          { id: "e3i", group: "机器感知类", name: "认知科学", credit: 2, meta: "课号 04834360 · 总学时 34(实践 4) · 大三/下", semester: "大三春" },
+          { id: "e3j", group: "机器感知类", name: "机器感知实验", credit: 2, meta: "课号 04831260 · 总学时 68(实践 62) · 大三/下", semester: "大三春" },
+          { id: "e3k", group: "机器感知类", name: "人工智能、机器人与伦理", credit: 2, meta: "课号 04834240 · 总学时 34(实践 4) · 大四/上", semester: "大四秋" },
+          // (4) 数据与机器智能类(至少 4 学分)
+          { id: "e4a", group: "数据与机器智能类", name: "几何计算前沿", credit: 2, meta: "课号 04835200 · 总学时 34(实践 2) · 大二/下", semester: "大二春" },
+          { id: "e4b", group: "数据与机器智能类", name: "图形学物理仿真", credit: 2, meta: "课号 04835210 · 总学时 34(实践 2) · 大二/下", semester: "大二春" },
+          { id: "e4c", group: "数据与机器智能类", name: "角色动画与运动仿真", credit: 2, meta: "课号 04835220 · 总学时 34 · 大二/下", semester: "大二春" },
+          { id: "e4d", group: "数据与机器智能类", name: "可信机器学习", credit: 2, meta: "课号 04835180 · 总学时 34 · 大二/下", semester: "大二春" },
+          { id: "e4e", group: "数据与机器智能类", name: "可视化与可视分析", credit: 3, meta: "课号 04835020 · 总学时 51(实践 21) · 大三/上", semester: "大三秋" },
+          { id: "e4f", group: "数据与机器智能类", name: "生成模型基础", credit: 3, meta: "课号 04835390 · 总学时 51 · 大三/上", semester: "大三秋" },
+          { id: "e4g", group: "数据与机器智能类", name: "高级渲染技术", credit: 2, meta: "课号 04834930 · 总学时 34(实践 8) · 大三/上", semester: "大三秋" },
+          { id: "e4h", group: "数据与机器智能类", name: "基于深度学习的自然语言理解", credit: 2, meta: "课号 04835380 · 总学时 34(实践 12) · 大三/上", semester: "大三秋" },
+          { id: "e4i", group: "数据与机器智能类", name: "人工智能芯片设计导论", credit: 3, meta: "课号 04835370 · 总学时 51(实践 24) · 大三/上", semester: "大三秋" },
+          { id: "e4j", group: "数据与机器智能类", name: "数据库概论", credit: 3, meta: "课号 04830220 · 总学时 51(实践 17) · 大三/上", semester: "大三秋" },
+          { id: "e4k", group: "数据与机器智能类", name: "图神经网络", credit: 2, meta: "课号 04835470 · 总学时 34 · 大三/上", semester: "大三秋" },
+          { id: "e4l", group: "数据与机器智能类", name: "大规模语言模型与自然语言生成", credit: 2, meta: "课号 04835480 · 总学时 34 · 大三/下", semester: "大三春" },
+          { id: "e4m", group: "数据与机器智能类", name: "数据仓库与数据挖掘方法", credit: 2, meta: "课号 04831370 · 总学时 34 · 大三/下", semester: "大三春" },
+          { id: "e4n", group: "数据与机器智能类", name: "计算成像基础", credit: 2, meta: "课号 04835540 · 总学时 34 · 大四/下", semester: "大四春" },
+          // (5) 物理与电子类(至少 2 学分)
+          { id: "e5a", group: "物理与电子类", name: "力学", credit: 3, meta: "课号 00431141 · 总学时 51(实践 32) · 大一/上", semester: "大一秋" },
+          { id: "e5a_alt1", group: "物理与电子类", name: "力学(4学分)(替代课)", credit: 4, meta: "课号 00431110 · 总学时 68(实践 32) · 替代「力学」", semester: "大一秋", alt: "e5a", isAlt: true },
+          { id: "e5a_alt2", group: "物理与电子类", name: "信息科学中的物理学(上)(替代课)", credit: 3, meta: "课号 04833370 · 总学时 68(实践 17) · 替代「力学」", semester: "大一秋", alt: "e5a", isAlt: true },
+          { id: "e5b", group: "物理与电子类", name: "电磁学", credit: 3, meta: "课号 00431143 · 总学时 51(实践 16) · 大一/下", semester: "大一春" },
+          { id: "e5b_alt1", group: "物理与电子类", name: "信息科学中的物理学(下)(替代课)", credit: 3, meta: "课号 04833371 · 总学时 68(实践 17) · 替代「电磁学」", semester: "大一春", alt: "e5b", isAlt: true },
+          { id: "e5b_alt2", group: "物理与电子类", name: "电磁学(4学分)(替代课)", credit: 4, meta: "课号 00431155 · 总学时 68(实践 16) · 替代「电磁学」", semester: "大一春", alt: "e5b", isAlt: true },
+          { id: "e5c", group: "物理与电子类", name: "微电子与电路基础", credit: 2, meta: "课号 04831770 · 总学时 51 · 大一/下", semester: "大一春" },
+          { id: "e5d", group: "物理与电子类", name: "电子系统基础训练", credit: 1, meta: "课号 04833800 · 总学时 34(实践 30) · 大一/下", semester: "大一春" },
+          // (6) 研究课程(0~6 学分)
+          { id: "e6", group: "研究课程", name: "研究课程(本科生科研训练)", credit: 3, meta: "0~6 学分 · 论文内容不能与毕业论文重复", semester: "任意" },
+        ]
+      },
+      {
+        id: "free_elective",
+        name: "自主选修课",
+        require: "14 学分",
+        min: 14, max: 14,
+        desc: "自主选修课:14 学分(全校课程均可)\n\n课程列表:\n| 课号 | 课程名称 | 课程性质 | 学分 | 总学时 | 实践总学时 | 选课学期 |\n| ---- | -------- | -------- | ---- | ------ | ---------- | -------- |\n| 04835040 | 智能科学研究实践I | 任选 | 2 | 34 | 0 | 大二/上 |\n| 04852240 | 视觉艺术与计算美学 | 任选 | 2 | 34 | 2 | 大二/上 |\n| 04834100 | 信息科学中的数学 | 任选 | 2 | 34 | 0 | 大二/上 |\n| 04835170 | 智能科学研究实践Ⅱ | 任选 | 3 | 51 | 0 | 大二/下 |\n| 04830270 | 程序设计语言概论 | 任选 | 2 | 43 | 9 | 大二/下 |\n| 04833510 | 视觉计算与深度学习 | 任选 | 2 | 34 | 0 | 大二/下 |\n| 04834940 | 量子计算 | 任选 | 3 | 51 | 17 | 大三/上 |\n| 04835530 | 计算影像生成技术 | 任选 | 2 | 32 | 0 | 大三/下 |\n| 04834980 | 量子信息 | 任选 | 3 | 51 | 9 | 大三/下 |\n| 04831270 | 智能信息系统 | 任选 | 3 | 51 | 16 | 大四/上 |\n| 04831250 | 机器智能实验 | 任选 | 2 | 68 | 51 | 大四/上 |",
+        courses: [
+          { id: "f1", name: "智能科学研究实践I", credit: 2, meta: "课号 04835040 · 总学时 34 · 大二/上", semester: "大二秋" },
+          { id: "f2", name: "视觉艺术与计算美学", credit: 2, meta: "课号 04852240 · 总学时 34(实践 2) · 大二/上", semester: "大二秋" },
+          { id: "f3", name: "信息科学中的数学", credit: 2, meta: "课号 04834100 · 总学时 34 · 大二/上", semester: "大二秋" },
+          { id: "f4", name: "智能科学研究实践Ⅱ", credit: 3, meta: "课号 04835170 · 总学时 51 · 大二/下", semester: "大二春" },
+          { id: "f5", name: "程序设计语言概论", credit: 2, meta: "课号 04830270 · 总学时 43(实践 9) · 大二/下", semester: "大二春" },
+          { id: "f6", name: "视觉计算与深度学习", credit: 2, meta: "课号 04833510 · 总学时 34 · 大二/下", semester: "大二春" },
+          { id: "f7", name: "量子计算", credit: 3, meta: "课号 04834940 · 总学时 51(实践 17) · 大三/上", semester: "大三秋" },
+          { id: "f8", name: "计算影像生成技术", credit: 2, meta: "课号 04835530 · 总学时 32 · 大三/下", semester: "大三春" },
+          { id: "f9", name: "量子信息", credit: 3, meta: "课号 04834980 · 总学时 51(实践 9) · 大三/下", semester: "大三春" },
+          { id: "f10", name: "智能信息系统", credit: 3, meta: "课号 04831270 · 总学时 51(实践 16) · 大四/上", semester: "大四秋" },
+          { id: "f11", name: "机器智能实验", credit: 2, meta: "课号 04831250 · 总学时 68(实践 51) · 大四/上", semester: "大四秋" },
+        ]
+      },
+    ]
+  },
+  {
+    id: "ai_psych",
+    name: "AI+心理认知项目",
+    require: "21 学分",
+    min: 21, max: 21,
+    desc: "### \"AI+心理认知\"项目\n\n#### 项目介绍\n\"AI+心理认知\"本科教育项目由心理与认知科学学院（以下简称\"心理学院\"）和信息科学技术学院（以下简称\"信科学院\"）共同组织,致力于发挥北京大学在心理学和人工智能领域的学科优势和教育资源。该项目课程的教学工作由心理学院和信科学院分别完成,学生管理由心理学院负责。\n\n#### 培养目标\n本项目旨在培养具备跨学科知识和实践能力的人才,能够深入理解人类认知过程与智能系统的交互,并在人工智能、心理学、神经科学等领域进行创新研究和应用。完成该项目的学生将掌握心理学的基础知识和研究方法,以及智能科学的理论与方法,能够将认知科学与智能科学相结合解决实际问题,适应多样化职业需求。\n\n#### 培养要求\n1. 掌握心理学的基本理论以及智能科学领域所需要的数理和计算机基础；\n2. 具备数据分析与建模、编程与开发等技术实践与研发能力；\n3. 能够综合应用上述能力解决科学研究或实际应用中问题。\n\n#### 获得项目证书要求\n学生须获得主修专业毕业证书和学位证书,修满本项目规定学分,经项目教学委员会审核通过后,方可获得本教育项目证书。\n\n#### 学分要求\n总学分 21,其中项目必修课 17 学分,项目选修课 4 学分。\n\n#### 说明\n1. 列表中的课程不能计入除自主选修课以外的其他主修学分类别,也不能计入双专业/辅修的必修课或选修课。\n2. 标 * 的课程（可视计算与交互概论）仅限心理学专业主修/双专业/辅修学生或生物科学（心理学方向）专业学生选课,与\"普通心理学\"互斥。\n3. 标 ** 的课程（实验心理学、心理测量）仅限信科学院计算机类专业主修/双专业/辅修学生选课,与人工智能二选一课程及机器学习二选一课程互斥。\n4. 部分选修课有先修课要求,请在选课前确认。\n5. 信科学院和心理学院开设的选修课至少各选 1 门。",
+    children: [
+      {
+        id: "ai_psych_required",
+        name: "项目必修课",
+        require: "17 学分",
+        min: 17, max: 17,
+        desc: "项目必修课:17 学分\n\n**两条修读路径(任选其一,学分均为 17):**\n\n**路径 A — 心理学方向学生**\n- 类脑智能基础(2)+ 神经科学与人工智能(2)+ 人工智能与计算思维(3)= 7\n- 普通心理学(4) 或 可视计算与交互概论 *(4),二选一\n- 人工智能引论(3)/ 人工智能基础(3),二选一\n- 机器学习概论(3)/ 机器学习(3),二选一\n- 小计:7+4+3+3 = 17 学分\n\n**路径 B — 信科计算机类方向学生**\n- 类脑智能基础(2)+ 神经科学与人工智能(2)+ 人工智能与计算思维(3)= 7\n- 普通心理学(4)\n- 实验心理学 **(4)+ 心理测量 **(2) —— 与人工智能/机器学习二选一课程互斥\n- 小计:7+4+4+2 = 17 学分\n\n**课程列表**\n\n| 课号 | 课程名称 | 学分 | 周学时 | 实践总学时 | 选课学期 |\n| ---- | -------- | ---- | ------ | ---------- | -------- |\n| 项目新开课 | 类脑智能基础 | 2 | 2 | 2 | 春季 |\n| 项目新开课 | 神经科学与人工智能 | 2 | 2 | 2 | 秋季 |\n| 04834472 | 人工智能与计算思维（限选心理学方向） | 3 | 4 | 0 | 春季 |\n| 01630900 | 普通心理学 | 4 | 4 | 4 | 秋季/春季 |\n| 04835000 | 可视计算与交互概论 * | 4 | 4 | 4 | 秋季 |\n| 04834040 | 人工智能引论 | 3 | 3 | 3 | 春季(二选一) |\n| 04835230 | 人工智能基础 | 3 | 3 | 17 | (二选一) |\n| 04831730 | 机器学习概论 | 3 | 3 | 8 | 秋季(二选一) |\n| 04833420 | 机器学习 | 3 | 3 | 0 | (二选一) |\n| 01630034 | 实验心理学 ** | 4 | 4 | 2 | 秋季/春季 |\n| 01603011 | 心理测量 ** | 2 | 2 | - | 秋季/春季 |\n\n**说明**\n1. 标 * 的课程仅限心理学专业主修/双专业/辅修学生或生物科学（心理学方向）专业学生选课,与\"普通心理学\"互斥(系统已设互斥)。\n2. 标 ** 的课程仅限信科学院计算机类专业主修/双专业/辅修学生选课,与人工智能二选一课程及机器学习二选一课程互斥(请勿同时选修)。",
+        courses: [
+          { id: "ap1", name: "类脑智能基础", credit: 2, meta: "项目新开课 · 周学时 2 · 实践 2", semester: ["大一春","大二春","大三春","大四春"] },
+          { id: "ap2", name: "神经科学与人工智能", credit: 2, meta: "项目新开课 · 周学时 2 · 实践 2", semester: ["大一秋","大二秋","大三秋","大四秋"] },
+          { id: "ap3", name: "人工智能与计算思维（限选心理学方向）", credit: 3, meta: "课号 04834472 · 周学时 4 · 实践 0", semester: ["大一春","大二春","大三春","大四春"] },
+          { id: "ap4", name: "普通心理学", credit: 4, meta: "课号 01630900 · 周学时 4 · 实践 4", semester: "任意", alt: "ap5" },
+          { id: "ap5", name: "可视计算与交互概论 *", credit: 4, meta: "课号 04835000 · 周学时 4 · 实践 4 · 仅限心理学专业/生科(心理学方向) · 与普通心理学互斥", semester: ["大一秋","大二秋","大三秋","大四秋"], alt: "ap4", isAlt: true },
+          { id: "ap6", name: "人工智能引论", credit: 3, meta: "课号 04834040 · 周学时 3 · 实践 3 · 二选一", semester: ["大一春","大二春","大三春","大四春"], alt: "ap7" },
+          { id: "ap7", name: "人工智能基础", credit: 3, meta: "课号 04835230 · 周学时 3 · 实践 17 · 二选一(替代人工智能引论)", semester: ["大一春","大二春","大三春","大四春"], alt: "ap6", isAlt: true },
+          { id: "ap8", name: "机器学习概论", credit: 3, meta: "课号 04831730 · 周学时 3 · 实践 8 · 二选一", semester: ["大一秋","大二秋","大三秋","大四秋"], alt: "ap9" },
+          { id: "ap9", name: "机器学习", credit: 3, meta: "课号 04833420 · 周学时 3 · 实践 0 · 二选一(替代机器学习概论)", semester: ["大一秋","大二秋","大三秋","大四秋"], alt: "ap8", isAlt: true },
+          { id: "ap10", name: "实验心理学 **", credit: 4, meta: "课号 01630034 · 周学时 4 · 实践 2 · 仅限信科计算机类 · 与AI/ML二选一互斥", semester: "任意" },
+          { id: "ap11", name: "心理测量 **", credit: 2, meta: "课号 01603011 · 周学时 2 · 仅限信科计算机类 · 与AI/ML二选一互斥", semester: "任意" },
+        ]
+      },
+      {
+        id: "ai_psych_elective",
+        name: "项目选修课",
+        require: "4 学分",
+        min: 4, max: 4,
+        desc: "项目选修课:4 学分\n\n**修读要求**\n1. 信科学院和心理学院开设的选修课至少各选 1 门。\n2. 部分课程有先修课要求,请在选课前确认。\n3. 列表中的课程不能计入除自主选修课以外的其他主修学分类别,也不能计入双专业/辅修的必修课或选修课。\n\n**信科学院选修课开课列表**\n\n| 课号 | 课程名称 | 学分 | 周学时 | 实践总学时 | 选课学期 |\n| ---- | -------- | ---- | ------ | ---------- | -------- |\n| 04835050 | 人工智能中的编程 | 3 | 3 | 3 | 秋季 |\n| 04831320 | 脑与认知科学 | 2 | 2 | 0 | 秋季 |\n| 04831290 | 模式识别导论 | 3 | 3 | 0 | 秋季 |\n\n**心理学院选修课开课列表**\n\n| 课号 | 课程名称 | 学分 | 周学时 | 实践总学时 | 选课学期 |\n| ---- | -------- | ---- | ------ | ---------- | -------- |\n| 01630705 | 脑中的节奏 | 2 | 2 | - | 春季 |\n| 01630075 | 认知建模基础 | 2 | 2 | - | 春季 |\n| 新开课 | 决策的认知神经算法 | 2 | 2 | - | - |\n| 新开课 | 系统认知神经科学 | 2 | 2 | - | - |\n| 新开课 | 心理统计（3） | 2 | 2 | - | - |\n| 新开课 | 人类与人工智能的双向启发：从思想到应用 | 2 | 2 | - | - |",
+        courses: [
+          // 信科学院选修课
+          { id: "ap12", group: "信科学院选修", name: "人工智能中的编程", credit: 3, meta: "课号 04835050 · 周学时 3 · 实践 3", semester: ["大一秋","大二秋","大三秋","大四秋"] },
+          { id: "ap13", group: "信科学院选修", name: "脑与认知科学", credit: 2, meta: "课号 04831320 · 周学时 2 · 实践 0", semester: ["大一秋","大二秋","大三秋","大四秋"] },
+          { id: "ap14", group: "信科学院选修", name: "模式识别导论", credit: 3, meta: "课号 04831290 · 周学时 3 · 实践 0", semester: ["大一秋","大二秋","大三秋","大四秋"] },
+          // 心理学院选修课
+          { id: "ap15", group: "心理学院选修", name: "脑中的节奏", credit: 2, meta: "课号 01630705 · 周学时 2", semester: ["大一春","大二春","大三春","大四春"] },
+          { id: "ap16", group: "心理学院选修", name: "认知建模基础", credit: 2, meta: "课号 01630075 · 周学时 2", semester: ["大一春","大二春","大三春","大四春"] },
+          { id: "ap17", group: "心理学院选修", name: "决策的认知神经算法", credit: 2, meta: "新开课 · 周学时 2", semester: "任意" },
+          { id: "ap18", group: "心理学院选修", name: "系统认知神经科学", credit: 2, meta: "新开课 · 周学时 2", semester: "任意" },
+          { id: "ap19", group: "心理学院选修", name: "心理统计（3）", credit: 2, meta: "新开课 · 周学时 2", semester: "任意" },
+          { id: "ap20", group: "心理学院选修", name: "人类与人工智能的双向启发：从思想到应用", credit: 2, meta: "新开课 · 周学时 2", semester: "任意" },
+        ]
+      },
+    ]
+  }
+];
+
+// 扁平化所有叶子分类(带 courses 的节点),便于查找与统计
+const categories = [];
+(function collect(arr) {
+  arr.forEach(node => {
+    if (node.courses) { categories.push(node); return; }
+    if (node.children) collect(node.children);
+  });
+})(tree);
+
+const selected = new Set(JSON.parse(localStorage.getItem("xk_selected") || "[]"));
+const completed = new Set(JSON.parse(localStorage.getItem("xk_completed") || "[]"));
+const semesters = ["大一秋", "大一春", "大二秋", "大二春", "大三秋", "大三春", "大四秋", "大四春"];
+let currentSemester = localStorage.getItem("xk_semester") || "all";
+let currentView = "home";
+
+function saveSelected() { localStorage.setItem("xk_selected", JSON.stringify([...selected])); }
+function saveCompleted() { localStorage.setItem("xk_completed", JSON.stringify([...completed])); }
+function saveSemester() { localStorage.setItem("xk_semester", currentSemester); }
+
+function resetAll() {
+  if (!confirm("确定清空全部已选课程?此操作不可撤销。")) return;
+  selected.clear();
+  saveSelected();
+  if (currentView === "home") renderTree();
+  else renderCategoryPage(currentView);
+  renderSidebar();
+  showToast("已清空全部选课");
+}
+
+function resetCompleted() {
+  if (!confirm("确定清空全部已修标记?此操作不可撤销。")) return;
+  completed.clear();
+  saveCompleted();
+  if (currentView === "home") renderTree();
+  else renderCategoryPage(currentView);
+  renderSidebar();
+  showToast("已清空全部已修标记");
+}
+
+function courseMatchesSemester(c) {
+  if (currentSemester === "all") return true;
+  if (!c.semester) return true;
+  if (c.semester === "任意") return true;
+  if (Array.isArray(c.semester)) return c.semester.includes(currentSemester);
+  return c.semester === currentSemester;
+}
+
+function semesterLabel(c) {
+  if (!c.semester) return "";
+  if (c.semester === "任意") return "任意学期";
+  if (Array.isArray(c.semester)) return c.semester.join(" / ");
+  return c.semester;
+}
+
+function renderSemesterBar() {
+  const bar = document.getElementById("semesterBar");
+  const allBtn = `<button class="semester-btn ${currentSemester === 'all' ? 'active' : ''}" onclick="setSemester('all')">全部</button>`;
+  const btns = semesters.map(s =>
+    `<button class="semester-btn ${currentSemester === s ? 'active' : ''}" onclick="setSemester('${s}')">${s}</button>`
+  ).join("");
+  const semHint = currentSemester === "all" ? "" : `<span style="margin-left:auto;font-size:12px;color:#95a5a6;">非「${currentSemester}」课程将禁用选修</span>`;
+  bar.innerHTML = `<span class="label">选课学期:</span>${allBtn}${btns}${semHint}`;
+}
+
+function setSemester(s) {
+  currentSemester = s;
+  saveSemester();
+  renderSemesterBar();
+  if (currentView === "home") renderTree();
+  else renderCategoryPage(currentView);
+}
+
+const expandedNodes = new Set(JSON.parse(localStorage.getItem("xk_expanded") || '["public_basic","major"]'));
+
+function saveExpanded() { localStorage.setItem("xk_expanded", JSON.stringify([...expandedNodes])); }
+
+function renderTree() {
+  const container = document.getElementById("treeContainer");
+  container.innerHTML = tree.map(node => renderTreeNode(node, 0)).join('');
+}
+
+function renderTreeNode(node, depth) {
+  const isLeaf = !!node.courses;
+  const expanded = expandedNodes.has(node.id);
+  const arrowCls = isLeaf ? "tree-arrow leaf" : `tree-arrow${expanded ? ' expanded' : ''}`;
+  const icon = isLeaf ? "📄" : (expanded ? "📂" : "📁");
+  const rowCls = isLeaf ? "tree-node-row is-leaf" : "tree-node-row";
+
+  let right = "";
+  if (isLeaf) {
+    const total = node.courses.length;
+    const avail = node.courses.filter(c => courseMatchesSemester(c)).length;
+    const catCredit = node.courses.filter(c => selected.has(c.id)).reduce((s, c) => s + c.credit, 0);
+    let progText, progCls;
+    if (catCredit >= node.min && catCredit <= node.max) {
+      progText = `✓${catCredit}`; progCls = "tree-progress ok";
+    } else if (catCredit < node.min) {
+      progText = `差${node.min - catCredit}`; progCls = "tree-progress warn";
+    } else {
+      progText = `超${catCredit - node.max}`; progCls = "tree-progress warn";
+    }
+    const statsText = currentSemester === "all" ? `${total}门` : `可选${avail}/${total}`;
+    const detailBtn = node.desc ? `<span class="tree-cat-detail" onclick="event.stopPropagation();showCatDetail('${node.id}')" title="查看分类介绍">详情</span>` : "";
+    right = `<span class="tree-stats">${statsText}</span><span class="${progCls}">${progText}</span>${detailBtn}<span class="tree-enter">进入 →</span>`;
+  } else {
+    // 非叶子节点:显示要求徽章 + 详情按钮(若有 desc)+ 汇总子分类进度
+    const reqBadge = node.require ? `<span class="tree-req">${node.require}</span>` : "";
+    const detailBtn = node.desc ? `<span class="tree-cat-detail" onclick="event.stopPropagation();showCatDetail('${node.id}')" title="查看分类介绍">详情</span>` : "";
+    // 汇总所有后代课程学分
+    let allCourses = [];
+    (function collectCourses(n) {
+      if (n.courses) allCourses = allCourses.concat(n.courses);
+      if (n.children) n.children.forEach(collectCourses);
+    })(node);
+    const total = allCourses.length;
+    const catCredit = allCourses.filter(c => selected.has(c.id)).reduce((s, c) => s + c.credit, 0);
+    let progText = "", progCls = "";
+    if (node.min !== undefined) {
+      if (catCredit >= node.min && catCredit <= node.max) {
+        progText = `✓${catCredit}`; progCls = "tree-progress ok";
+      } else if (catCredit < node.min) {
+        progText = `差${node.min - catCredit}`; progCls = "tree-progress warn";
+      } else {
+        progText = `超${catCredit - node.max}`; progCls = "tree-progress warn";
+      }
+    }
+    const statsText = `${total}门`;
+    right = `${reqBadge}<span class="tree-stats">${statsText}</span>${progText ? `<span class="${progCls}">${progText}</span>` : ''}${detailBtn}`;
+  }
+
+  const onClick = isLeaf
+    ? `enterCategory('${node.id}')`
+    : `toggleNode('${node.id}')`;
+
+  const childrenHtml = (!isLeaf && node.children)
+    ? `<div class="tree-children${expanded ? ' show' : ''}" id="children-${node.id}">${node.children.map(ch => renderTreeNode(ch, depth + 1)).join('')}</div>`
+    : "";
+
+  return `
+    <div class="tree-node">
+      <div class="${rowCls}" onclick="${onClick}">
+        <span class="${arrowCls}">▶</span>
+        <span class="tree-icon">${icon}</span>
+        <span class="tree-name">${node.name}</span>
+        ${right}
+      </div>
+      ${childrenHtml}
+    </div>
+  `;
+}
+
+function toggleNode(id) {
+  if (expandedNodes.has(id)) expandedNodes.delete(id);
+  else expandedNodes.add(id);
+  saveExpanded();
+  renderTree();
+}
+
+function enterCategory(id) {
+  currentView = id;
+  document.getElementById("homeView").style.display = "none";
+  document.getElementById("subView").style.display = "block";
+  renderCategoryPage(id);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function backToHome() {
+  currentView = "home";
+  document.getElementById("subView").style.display = "none";
+  document.getElementById("homeView").style.display = "block";
+  renderTree();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderCategoryPage(id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  document.getElementById("subHeader").innerHTML = `
+    <button class="btn-back" onclick="backToHome()"><span class="arrow">←</span> 返回</button>
+    <h2>${cat.name}</h2>
+    <span class="sub-req">要求 ${cat.require}</span>
+  `;
+  const container = document.getElementById("courseContainer");
+
+  // 方向学分配置(仅专业选修课用)
+  const groupMin = {
+    "专业数学类": 3,
+    "计算基础与编程类": 8,
+    "机器感知类": 3,
+    "数据与机器智能类": 4,
+    "物理与电子类": 2,
+    "研究课程": 0,
+    "信科学院选修": 2,
+    "心理学院选修": 2,
+    "新生讨论课": 1,
+  };
+
+  // 判断是否需要分组
+  const hasGroup = cat.courses.some(c => c.group);
+  if (!hasGroup) {
+    container.innerHTML = cat.courses.map(c => renderCourseCard(c)).join('');
+    return;
+  }
+
+  // 按 group 分组,保持出现顺序
+  const groupOrder = [];
+  const groupMap = {};
+  cat.courses.forEach(c => {
+    const g = c.group || "其他";
+    if (!groupMap[g]) { groupMap[g] = []; groupOrder.push(g); }
+    groupMap[g].push(c);
+  });
+
+  container.innerHTML = groupOrder.map((g, idx) => {
+    const courses = groupMap[g];
+    const min = groupMin[g] != null ? groupMin[g] : null;
+    let groupCredit = 0;
+    let selCount = 0;
+    courses.forEach(c => { if (selected.has(c.id)) { groupCredit += c.credit; selCount++; } });
+    const availCount = courses.filter(c => courseMatchesSemester(c)).length;
+    const statusHtml = min != null
+      ? (groupCredit >= min
+          ? `<span style="color:#27ae60;">✓已选 ${groupCredit} 学分(达标)</span>`
+          : `<span style="color:#e67e22;">差 ${min - groupCredit} 学分(已选 ${groupCredit})</span>`)
+      : `<span style="color:#7f8c8d;">已选 ${groupCredit} 学分</span>`;
+    const minLabel = min != null ? ` · 至少 ${min} 学分` : "";
+    return `
+      <div class="course-group">
+        <div class="group-header" onclick="toggleGroup('${g}-${idx}')">
+          <span class="group-arrow" id="arrow-${g}-${idx}">▶</span>
+          <span class="group-name">(${idx + 1}) ${g}</span>
+          <span class="group-meta">${minLabel} · 已选 ${selCount} · 可选 ${availCount}/${courses.length} 门</span>
+          <span class="group-status">${statusHtml}</span>
+          <span class="group-detail-btn" onclick="event.stopPropagation();showGroupDetail('${id}','${g}')">详情</span>
+        </div>
+        <div class="group-body" id="group-${g}-${idx}" style="display:none;">
+          ${courses.map(c => renderCourseCard(c)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showGroupDetail(catId, groupName) {
+  const cat = categories.find(c => c.id === catId);
+  if (!cat) return;
+  const courses = cat.courses.filter(c => c.group === groupName);
+  if (!courses.length) return;
+  const minMap = { "专业数学类": 3, "计算基础与编程类": 8, "机器感知类": 3, "数据与机器智能类": 4, "物理与电子类": 2, "研究课程": 0, "信科学院选修": 2, "心理学院选修": 2, "新生讨论课": 1 };
+  const min = minMap[groupName];
+  let md = `### ${groupName}\n\n`;
+  if (min != null && min > 0) md += `**至少选修 ${min} 学分**\n\n`;
+  else if (min === 0) md += `**0~6 学分**(论文内容不能与毕业论文重复使用)\n\n`;
+  md += `| 课程名称 | 学分 | 学期 | 详细信息 |\n| -------- | ---- | ---- | -------- |\n`;
+  courses.forEach(c => {
+    md += `| ${c.name}${c.isAlt ? '(替代课)' : ''} | ${c.credit} | ${semesterLabel(c) || '-'} | ${c.meta} |\n`;
+  });
+  document.getElementById("modalTitle").textContent = groupName + " · 课程介绍";
+  document.getElementById("modalMeta").textContent = `${cat.name} · 共 ${courses.length} 门课`;
+  document.getElementById("modalDesc").innerHTML = mdToHtml(md);
+  document.getElementById("modalImages").innerHTML = "";
+  document.getElementById("modalMask").classList.add("show");
+}
+
+function renderCourseCard(c) {
+  const isSelected = selected.has(c.id);
+  const isCompleted = completed.has(c.id);
+  const matches = courseMatchesSemester(c);
+  const altItemSelected = c.alt ? selected.has(c.alt) : false;
+  // 已修或已选时,不可再选修
+  const disabled = (!matches && !isSelected) || altItemSelected || isCompleted;
+  let titleAttr = "";
+  if (disabled) {
+    if (isCompleted) {
+      titleAttr = ` title="已修课程,不可重复选修(可点击已修按钮取消标记)"`;
+    } else if (altItemSelected) {
+      const altItem = findCourse(c.alt);
+      titleAttr = ` title="互斥课程「${altItem ? altItem.course.name : c.alt}」已选,不可选修"`;
+    } else {
+      titleAttr = ` title="非本学期(${semesterLabel(c) || '未指定'})不可选"`;
+    }
+  }
+  const disabledCls = disabled ? " disabled" : "";
+  const btnDisabled = disabled ? " disabled" : "";
+  const creditBadge = c.credit > 0
+    ? `<span class="course-credit">${c.credit} 学分</span>`
+    : '<span class="course-credit" style="background:#eee;color:#95a5a6;">0 学分</span>';
+  const altBadge = c.alt
+    ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:8px;background:#fff3cd;color:#856404;font-size:11px;border:1px solid #ffe69c;">互斥</span>`
+    : '';
+  const altItem = c.alt ? findCourse(c.alt) : null;
+  const altMeta = altItem
+    ? `<div style="margin-top:2px;font-size:11px;color:#856404;">互斥:已选「${altItem.course.name}」时不可选修本课</div>`
+    : '';
+  return `
+    <div class="course ${isSelected ? 'selected' : ''}${isCompleted ? ' completed' : ''}${disabledCls}" id="course-${c.id}"${titleAttr}>
+      <div class="course-info">
+        <div class="course-name">${c.name}${c.semester ? `<span class="course-semester">${semesterLabel(c)}</span>` : ''}${altBadge}</div>
+        <div class="course-meta">${c.meta}</div>
+        ${altMeta}
+      </div>
+      ${creditBadge}
+      ${c.desc ? `<button class="btn btn-detail" onclick="showDetail('${c.id}')">详情</button>` : ''}
+      <button class="btn btn-done${isCompleted ? ' active' : ''}" onclick="toggleCompleted('${c.id}')" title="标记为已修/未修">
+        ${isCompleted ? '已修✓' : '已修'}
+      </button>
+      <button class="btn ${isSelected ? 'btn-drop' : 'btn-select'}" onclick="toggleCourse('${c.id}')"${btnDisabled}>
+        ${isSelected ? '退选' : '选修'}
+      </button>
+    </div>
+  `;
+}
+
+function toggleGroup(key) {
+  const body = document.getElementById("group-" + key);
+  const arrow = document.getElementById("arrow-" + key);
+  if (!body) return;
+  if (body.style.display === "none") {
+    body.style.display = "block";
+    arrow.textContent = "▼";
+  } else {
+    body.style.display = "none";
+    arrow.textContent = "▶";
+  }
+}
+
+function toggleCourse(id) {
+  const item = findCourse(id);
+  if (!item) return;
+  const wasSelected = selected.has(id);
+  if (wasSelected) {
+    selected.delete(id);
+    showToast("已退选");
+  } else {
+    if (completed.has(id)) {
+      showToast("已修课程,不可重复选修(请先取消已修标记)");
+      return;
+    }
+    if (!courseMatchesSemester(item.course)) {
+      showToast("非本学期课程,不可选修");
+      return;
+    }
+    if (item.course.alt && selected.has(item.course.alt)) {
+      const altItem = findCourse(item.course.alt);
+      showToast(`已选互斥课程「${altItem ? altItem.course.name : item.course.alt}」,不可同时选修`);
+      return;
+    }
+    selected.add(id);
+    showToast("已选入");
+  }
+  saveSelected();
+  if (currentView === "home") {
+    renderTree();
+  } else {
+    // 局部更新受影响的卡片,避免重新渲染整个分类页导致分组折叠
+    updateCourseCard(id);
+    if (item.course.alt) updateCourseCard(item.course.alt);
+    // 更新分组标题中的学分状态
+    updateGroupHeaders();
+  }
+  renderSidebar();
+}
+
+function toggleCompleted(id) {
+  const item = findCourse(id);
+  if (!item) return;
+  if (completed.has(id)) {
+    completed.delete(id);
+    showToast("已取消已修标记");
+  } else {
+    completed.add(id);
+    showToast("已标记为已修");
+  }
+  saveCompleted();
+  if (currentView === "home") {
+    renderTree();
+  } else {
+    updateCourseCard(id);
+  }
+  renderSidebar();
+}
+
+function updateCourseCard(id) {
+  const item = findCourse(id);
+  if (!item) return;
+  const el = document.getElementById("course-" + id);
+  if (!el) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = renderCourseCard(item.course).trim();
+  const newCard = tmp.firstChild;
+  el.replaceWith(newCard);
+}
+
+function updateGroupHeaders() {
+  // 更新当前分类页所有分组的学分状态与可选数
+  const cat = categories.find(c => c.id === currentView);
+  if (!cat || !cat.courses.some(c => c.group)) return;
+  const groupMin = { "专业数学类": 3, "计算基础与编程类": 8, "机器感知类": 3, "数据与机器智能类": 4, "物理与电子类": 2, "研究课程": 0, "信科学院选修": 2, "心理学院选修": 2, "新生讨论课": 1 };
+  const groupOrder = [];
+  const groupMap = {};
+  cat.courses.forEach(c => {
+    const g = c.group || "其他";
+    if (!groupMap[g]) { groupMap[g] = []; groupOrder.push(g); }
+    groupMap[g].push(c);
+  });
+  groupOrder.forEach((g, idx) => {
+    const courses = groupMap[g];
+    const min = groupMin[g] != null ? groupMin[g] : null;
+    let groupCredit = 0;
+    let selCount = 0;
+    courses.forEach(c => { if (selected.has(c.id)) { groupCredit += c.credit; selCount++; } });
+    const availCount = courses.filter(c => courseMatchesSemester(c)).length;
+    const statusEl = document.querySelector(`#group-${g}-${idx}`).closest('.course-group').querySelector('.group-status');
+    const metaEl = document.querySelector(`#group-${g}-${idx}`).closest('.course-group').querySelector('.group-meta');
+    if (statusEl) {
+      statusEl.innerHTML = min != null
+        ? (groupCredit >= min
+            ? `<span style="color:#27ae60;">✓已选 ${groupCredit} 学分(达标)</span>`
+            : `<span style="color:#e67e22;">差 ${min - groupCredit} 学分(已选 ${groupCredit})</span>`)
+        : `<span style="color:#7f8c8d;">已选 ${groupCredit} 学分</span>`;
+    }
+    if (metaEl) {
+      const minLabel = min != null ? ` · 至少 ${min} 学分` : "";
+      metaEl.textContent = `${minLabel} · 已选 ${selCount} · 可选 ${availCount}/${courses.length} 门`.trim();
+    }
+  });
+}
+
+function findCourse(id) {
+  for (const cat of categories) {
+    const c = cat.courses.find(c => c.id === id);
+    if (c) return { cat, course: c };
+  }
+  return null;
+}
+
+function renderSidebar() {
+  let totalCredit = 0;
+  const catCredits = {};
+
+  categories.forEach(cat => {
+    catCredits[cat.id] = 0;
+    cat.courses.forEach(c => {
+      if (selected.has(c.id)) {
+        totalCredit += c.credit;
+        catCredits[cat.id] += c.credit;
+      }
+    });
+  });
+
+  document.getElementById("totalCredit").textContent = totalCredit;
+  const progress = Math.min(100, (totalCredit / 141) * 100);
+  document.getElementById("totalProgress").style.width = progress + "%";
+
+  const reqList = document.getElementById("reqList");
+  reqList.innerHTML = categories.map(cat => {
+    const credit = catCredits[cat.id];
+    let status, cls;
+    if (credit >= cat.min && credit <= cat.max) {
+      status = "✓"; cls = "ok";
+    } else if (credit < cat.min) {
+      status = `差${cat.min - credit}`; cls = "warn";
+    } else {
+      status = `超${credit - cat.max}`; cls = "warn";
+    }
+    return `<div class="req-item">
+      <span>${cat.name}</span>
+      <span class="${cls}">${credit}/${cat.require} ${status}</span>
+    </div>`;
+  }).join("");
+
+  const list = document.getElementById("selectedList");
+  const selCount = document.getElementById("selectedCount");
+  if (selected.size === 0) {
+    list.innerHTML = '<li class="empty">暂未选课</li>';
+    selCount.textContent = "0 门 · 0 学分";
+  } else {
+    let selCredit = 0;
+    list.innerHTML = Array.from(selected).map(id => {
+      const item = findCourse(id);
+      if (!item) return "";
+      selCredit += item.course.credit;
+      return `<li>
+        <span>${item.course.name}</span>
+        <span>
+          ${item.course.credit}学分
+          <button class="btn btn-drop" style="margin-left:6px;padding:2px 8px;" onclick="toggleCourse('${id}')">退</button>
+        </span>
+      </li>`;
+    }).join("");
+    selCount.textContent = `${selected.size} 门 · ${selCredit} 学分`;
+  }
+
+  // 已修课程列表
+  let completedCredit = 0;
+  const compList = document.getElementById("completedList");
+  const compCount = document.getElementById("completedCount");
+  if (completed.size === 0) {
+    compList.innerHTML = '<li class="empty">暂无已修标记</li>';
+    compCount.textContent = "0 门";
+  } else {
+    compList.innerHTML = Array.from(completed).map(id => {
+      const item = findCourse(id);
+      if (!item) return "";
+      completedCredit += item.course.credit;
+      return `<li>
+        <span>${item.course.name}</span>
+        <span>
+          ${item.course.credit}学分
+          <button class="btn btn-done" style="margin-left:6px;padding:2px 8px;" onclick="toggleCompleted('${id}')">取消</button>
+        </span>
+      </li>`;
+    }).join("");
+    compCount.textContent = `${completed.size} 门 · ${completedCredit} 学分`;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("show"), 1500);
+}
+
+function showDetail(id) {
+  const item = findCourse(id);
+  if (!item) return;
+  const c = item.course;
+  document.getElementById("modalTitle").textContent = c.name;
+  document.getElementById("modalMeta").textContent = `${item.cat.name} · ${c.credit} 学分 · ${c.meta}${c.semester ? ' · ' + semesterLabel(c) : ''}`;
+  document.getElementById("modalDesc").innerHTML = mdToHtml(c.desc || "");
+  const imgsBox = document.getElementById("modalImages");
+  if (c.images && c.images.length) {
+    imgsBox.innerHTML = `<div class="img-title">课程资料(PDF 原文,共 ${c.images.length} 页)</div>` +
+      c.images.map(src => `<img src="${src}" alt="课程资料" loading="lazy">`).join("");
+  } else {
+    imgsBox.innerHTML = "";
+  }
+  document.getElementById("modalMask").classList.add("show");
+}
+
+// 轻量 markdown → HTML 渲染(支持表格/标题/列表/加粗/段落/分隔线)
+function mdToHtml(md) {
+  if (!md) return "";
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const inline = s => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  let html = "";
+  let i = 0;
+  let inList = false;
+  const closeList = () => {
+    if (inList === true) html += "</ul>";
+    else if (inList === 'ol') html += "</ol>";
+    inList = false;
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // 表格:连续的 | ... | 行 + 分隔行
+    if (/^\s*\|/.test(line) && i + 1 < lines.length && /^\s*\|?[\s:-]+\|/.test(lines[i + 1])) {
+      closeList();
+      const headerCells = line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(s => s.trim());
+      let rows = [];
+      let j = i + 2;
+      while (j < lines.length && /^\s*\|/.test(lines[j])) {
+        const cells = lines[j].trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(s => s.trim());
+        rows.push(cells);
+        j++;
+      }
+      html += '<div class="md-table-wrap"><table class="md-table"><thead><tr>';
+      html += headerCells.map(c => `<th>${inline(c)}</th>`).join("");
+      html += '</tr></thead><tbody>';
+      rows.forEach(r => {
+        html += '<tr>' + r.map(c => `<td>${inline(c)}</td>`).join("") + '</tr>';
+      });
+      html += '</tbody></table></div>';
+      i = j;
+      continue;
+    }
+
+    // 标题
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      closeList();
+      const lvl = h[1].length;
+      html += `<h${lvl}>${inline(h[2])}</h${lvl}>`;
+      i++;
+      continue;
+    }
+
+    // 分隔线
+    if (/^\s*([-*_])\1{2,}\s*$/.test(line)) {
+      closeList();
+      html += '<hr>';
+      i++;
+      continue;
+    }
+
+    // 无序列表
+    const li = line.match(/^\s*[-*+]\s+(.*)$/);
+    if (li) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${inline(li[1])}</li>`;
+      i++;
+      continue;
+    }
+
+    // 有序列表
+    const ol = line.match(/^\s*\d+\.\s+(.*)$/);
+    if (ol) {
+      if (!inList || inList !== 'ol') { closeList(); html += '<ol>'; inList = 'ol'; }
+      html += `<li>${inline(ol[1])}</li>`;
+      i++;
+      continue;
+    }
+
+    // 空行
+    if (/^\s*$/.test(line)) {
+      closeList();
+      i++;
+      continue;
+    }
+
+    // 普通段落:连续多行合并,行间用 <br> 分隔
+    closeList();
+    let paraLines = [line];
+    let j = i + 1;
+    while (j < lines.length) {
+      const nl = lines[j];
+      if (/^\s*$/.test(nl)) break;
+      if (/^\s*\|/.test(nl) && j + 1 < lines.length && /^\s*\|?[\s:-]+\|/.test(lines[j + 1])) break;
+      if (/^(#{1,6})\s+/.test(nl)) break;
+      if (/^\s*([-*_])\1{2,}\s*$/.test(nl)) break;
+      if (/^\s*[-*+]\s+/.test(nl)) break;
+      if (/^\s*\d+\.\s+/.test(nl)) break;
+      paraLines.push(nl);
+      j++;
+    }
+    html += `<p>${paraLines.map(inline).join("<br>")}</p>`;
+    i = j;
+  }
+  closeList();
+  return html;
+}
+
+function findTreeNode(id) {
+  let result = null;
+  (function search(arr) {
+    for (const n of arr) {
+      if (n.id === id) { result = n; return; }
+      if (n.children) search(n.children);
+      if (result) return;
+    }
+  })(tree);
+  return result;
+}
+
+function showCatDetail(id) {
+  const node = findTreeNode(id);
+  if (!node || !node.desc) return;
+  // 统计该节点下所有后代课程数
+  let count = 0;
+  (function countCourses(n) {
+    if (n.courses) count += n.courses.length;
+    if (n.children) n.children.forEach(countCourses);
+  })(node);
+  document.getElementById("modalTitle").textContent = node.name + " · 课程介绍";
+  document.getElementById("modalMeta").textContent = `要求 ${node.require || '-'} · 共 ${count} 门课`;
+  document.getElementById("modalDesc").innerHTML = mdToHtml(node.desc);
+  const imgsBox = document.getElementById("modalImages");
+  if (node.images && node.images.length) {
+    imgsBox.innerHTML = `<div class="img-title">课程资料(共 ${node.images.length} 张)</div>` +
+      node.images.map(src => `<img src="${src}" alt="课程资料" loading="lazy">`).join("");
+  } else {
+    imgsBox.innerHTML = "";
+  }
+  document.getElementById("modalMask").classList.add("show");
+}
+
+function closeDetail() {
+  document.getElementById("modalMask").classList.remove("show");
+}
+
+renderSemesterBar();
+renderTree();
+renderSidebar();
+</script>
+
+</body>
+</html>
